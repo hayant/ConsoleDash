@@ -3,4 +3,9 @@ project(ConsoleDash)
 
 set(CMAKE_CXX_STANDARD 23)
 
-add_executable(ConsoleDash main.cpp)
+add_executable(ConsoleDash
+    main.cpp
+    ThreadPool.cpp
+    GameEngine.cpp
+    ConsoleDash.cpp
+)
