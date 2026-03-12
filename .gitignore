@@ -1,0 +1,36 @@
+# Build directories
+build/
+cmake-build*/
+
+# CMake-generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
+
+# Binaries and libraries
+ConsoleDash
+ConsoleDashTests
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+
+# Compiler / tool artifacts
+*.pch
+*.pdb
+*.ilk
+*.log
+
+# Editor / IDE metadata
+.idea/
+.vscode/
+
+# OS-specific cruft
+.DS_Store
+Thumbs.db
+
