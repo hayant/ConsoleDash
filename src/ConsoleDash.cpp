@@ -567,32 +567,42 @@ void ConsoleDash::try_reach_rockford(int dx, int dy) {
 
 void ConsoleDash::render() const {
     std::lock_guard<std::mutex> lock(state_mutex_);
+    std::string frame;
     const bool anim_even = (animation_counter_.load(std::memory_order_relaxed) % 2) == 0;
 #if defined(_WIN32) || defined(_WIN64)
     std::system("cls");
 #else
     std::system("clear");
 #endif
+    frame.reserve((WIDTH + 1) * HEIGHT * 2); // *2 for occasional multibyte chars
+    frame += "\033[H";
+
     for (int y = 0; y < HEIGHT; ++y) {
         for (int x = 0; x < WIDTH; ++x) {
             switch (grid_[x][y].tile) {
-                case Tile::SPACE:       std::cout << ' '; break;
-                case Tile::DIRT:        std::cout << "\u00B7"; break; // middle dot
-                case Tile::WALL:        std::cout << '#'; break;
-                case Tile::ROCK:        std::cout << 'O'; break;
-                case Tile::DIAMOND:     std::cout << '*'; break;
-                case Tile::FIREFLY:     std::cout << (anim_even ? 'f' : 'F'); break;
-                case Tile::BUTTERFLY:   std::cout << (anim_even ? 'b' : 'B'); break;
-                case Tile::AMOEBA:      std::cout << '~'; break;
-                case Tile::MAGIC_WALL:  std::cout << 'M'; break;
-                case Tile::ROCKFORD:    std::cout << '@'; break;
+                case Tile::SPACE:     frame += ' ';    break;
+                case Tile::DIRT:      frame += "\u00B7"; break;
+                case Tile::WALL:      frame += '#';    break;
+                case Tile::ROCK:      frame += 'O';    break;
+                case Tile::DIAMOND:   frame += '*';    break;
+                case Tile::FIREFLY:   frame += (anim_even ? 'f' : 'F'); break;
+                case Tile::BUTTERFLY: frame += (anim_even ? 'b' : 'B'); break;
+                case Tile::AMOEBA:    frame += '~';    break;
+                case Tile::MAGIC_WALL:frame += 'M';    break;
+                case Tile::ROCKFORD:  frame += '@';    break;
                 case Tile::EXIT:
-                    std::cout << (diamonds_collected_ >= diamonds_required_ ? (anim_even ? 'X' : 'x') : 'x');
+                    frame += (diamonds_collected_ >= diamonds_required_
+                              ? (anim_even ? 'X' : 'x') : 'x');
                     break;
             }
         }
-        std::cout << '\n';
+        frame += '\n';
     }
+
+    // One syscall for the entire frame
+    fwrite(frame.data(), 1, frame.size(), stdout);
+    fflush(stdout);
+    
     std::cout << "Diamonds: " << diamonds_collected_ << '/' << diamonds_required_
               << "  [WASD] Move  [Q] Quit\n";
 }
