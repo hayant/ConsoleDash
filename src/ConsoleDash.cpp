@@ -565,10 +565,30 @@ void ConsoleDash::try_reach_rockford(int dx, int dy) {
     }
 }
 
+const char firefly_mark(int anim_frame_per_three) {
+    switch (anim_frame_per_three) {
+        case 0: return '|';
+        case 1: return '<';
+        case 2: return '>';
+        default: return '|';
+    }
+}
+
+const char butterfly_mark(int anim_frame_per_three) {
+    switch (anim_frame_per_three) {
+        case 0: return '|';
+        case 1: return '(';
+        case 2: return ')';
+        default: return '|';
+    }
+}
+
 void ConsoleDash::render() const {
     std::lock_guard<std::mutex> lock(state_mutex_);
     std::string frame;
     const bool anim_even = (animation_counter_.load(std::memory_order_relaxed) % 2) == 0;
+    const int anim_frame_per_three = animation_counter_.load(std::memory_order_relaxed) % 3;
+
 #if defined(_WIN32) || defined(_WIN64)
     std::system("cls");
 #else
@@ -585,14 +605,14 @@ void ConsoleDash::render() const {
                 case Tile::WALL:      frame += '#';    break;
                 case Tile::ROCK:      frame += 'O';    break;
                 case Tile::DIAMOND:   frame += '*';    break;
-                case Tile::FIREFLY:   frame += (anim_even ? 'f' : 'F'); break;
-                case Tile::BUTTERFLY: frame += (anim_even ? 'b' : 'B'); break;
-                case Tile::AMOEBA:    frame += '~';    break;
+                case Tile::FIREFLY:   frame += firefly_mark(anim_frame_per_three); break;
+                case Tile::BUTTERFLY: frame += butterfly_mark(anim_frame_per_three); break;
+                case Tile::AMOEBA:    frame += (anim_even ? '~' : '-');    break;
                 case Tile::MAGIC_WALL:frame += 'M';    break;
                 case Tile::ROCKFORD:  frame += '@';    break;
                 case Tile::EXIT:
                     frame += (diamonds_collected_ >= diamonds_required_
-                              ? (anim_even ? 'X' : 'x') : 'x');
+                              ? (anim_even ? ' ' : '#') : '#');
                     break;
             }
         }
@@ -602,7 +622,7 @@ void ConsoleDash::render() const {
     // One syscall for the entire frame
     fwrite(frame.data(), 1, frame.size(), stdout);
     fflush(stdout);
-    
+
     std::cout << "Diamonds: " << diamonds_collected_ << '/' << diamonds_required_
               << "  [WASD] Move  [Q] Quit\n";
 }

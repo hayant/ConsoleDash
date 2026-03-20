@@ -137,7 +137,7 @@ int main() {
     build_test_level(game);
 
     constexpr auto game_tick_interval = std::chrono::milliseconds(250);
-    constexpr auto animation_tick_interval = std::chrono::milliseconds(120);
+    constexpr auto animation_tick_interval = std::chrono::milliseconds(200);
     auto next_game_tick = std::chrono::steady_clock::now();
 
     std::atomic<bool> animation_running{true};
