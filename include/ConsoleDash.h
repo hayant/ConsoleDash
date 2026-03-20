@@ -3,6 +3,8 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <atomic>
+#include <mutex>
 
 namespace consoledash {
 
@@ -39,6 +41,7 @@ public:
 
     void tick();
     void set_input(int dx, int dy, bool reach = false);
+    void advance_animation();
     void render() const;
 
     int rockford_x() const { return rockford_x_; }
@@ -66,6 +69,8 @@ private:
     int diamonds_required_ = 0;
     bool game_over_ = false;
     bool player_wins_ = false;
+    std::atomic<std::uint64_t> animation_counter_{0};
+    mutable std::mutex state_mutex_;
 
     int amoeba_growth_counter_ = 0;
     static constexpr int AMOEBA_GROWTH_INTERVAL = 4;

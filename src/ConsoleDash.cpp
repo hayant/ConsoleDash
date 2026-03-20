@@ -127,7 +127,13 @@ void ConsoleDash::set_input(int dx, int dy, bool reach) {
     pending_reach_ = reach;
 }
 
+void ConsoleDash::advance_animation() {
+    animation_counter_.fetch_add(1, std::memory_order_relaxed);
+}
+
 void ConsoleDash::tick() {
+    std::lock_guard<std::mutex> lock(state_mutex_);
+
     for (int x = 0; x < WIDTH; ++x)
         for (int y = 0; y < HEIGHT; ++y)
             moved_[x][y] = false;
@@ -560,6 +566,8 @@ void ConsoleDash::try_reach_rockford(int dx, int dy) {
 }
 
 void ConsoleDash::render() const {
+    std::lock_guard<std::mutex> lock(state_mutex_);
+    const bool anim_even = (animation_counter_.load(std::memory_order_relaxed) % 2) == 0;
 #if defined(_WIN32) || defined(_WIN64)
     std::system("cls");
 #else
@@ -573,13 +581,13 @@ void ConsoleDash::render() const {
                 case Tile::WALL:        std::cout << '#'; break;
                 case Tile::ROCK:        std::cout << 'O'; break;
                 case Tile::DIAMOND:     std::cout << '*'; break;
-                case Tile::FIREFLY:     std::cout << 'f'; break;
-                case Tile::BUTTERFLY:   std::cout << 'b'; break;
+                case Tile::FIREFLY:     std::cout << (anim_even ? 'f' : 'F'); break;
+                case Tile::BUTTERFLY:   std::cout << (anim_even ? 'b' : 'B'); break;
                 case Tile::AMOEBA:      std::cout << '~'; break;
                 case Tile::MAGIC_WALL:  std::cout << 'M'; break;
                 case Tile::ROCKFORD:    std::cout << '@'; break;
                 case Tile::EXIT:
-                    std::cout << (diamonds_collected_ >= diamonds_required_ ? 'X' : 'x');
+                    std::cout << (diamonds_collected_ >= diamonds_required_ ? (anim_even ? 'X' : 'x') : 'x');
                     break;
             }
         }

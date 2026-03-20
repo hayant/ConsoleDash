@@ -2,6 +2,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <atomic>
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <conio.h>
@@ -135,10 +136,20 @@ int main() {
     consoledash::ConsoleDash game;
     build_test_level(game);
 
-    constexpr auto tick_interval = std::chrono::milliseconds(250);
-    auto next_tick = std::chrono::steady_clock::now();
+    constexpr auto game_tick_interval = std::chrono::milliseconds(250);
+    constexpr auto animation_tick_interval = std::chrono::milliseconds(120);
+    auto next_game_tick = std::chrono::steady_clock::now();
 
-    game.render();
+    std::atomic<bool> animation_running{true};
+    std::thread animation_thread([&] {
+        auto next_anim_tick = std::chrono::steady_clock::now();
+        while (animation_running.load(std::memory_order_relaxed)) {
+            game.advance_animation();
+            game.render();
+            next_anim_tick += animation_tick_interval;
+            std::this_thread::sleep_until(next_anim_tick);
+        }
+    });
     while (game.is_alive()) {
         int dx = 0, dy = 0;
         bool reach = false;
@@ -148,10 +159,16 @@ int main() {
 
         game.set_input(dx, dy, reach);
         game.tick();
+        // Ensure gameplay movement/state updates are shown immediately
+        // at each game tick boundary, independent of animation cadence.
         game.render();
+        next_game_tick += game_tick_interval;
+        std::this_thread::sleep_until(next_game_tick);
+    }
 
-        next_tick += tick_interval;
-        std::this_thread::sleep_until(next_tick);
+    animation_running.store(false, std::memory_order_relaxed);
+    if (animation_thread.joinable()) {
+        animation_thread.join();
     }
 
     restore_input();
