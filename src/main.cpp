@@ -2,7 +2,6 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
-#include <cstdio>
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <conio.h>
@@ -51,20 +50,46 @@ static int get_key_nonblock() {
 }
 #endif
 
-static void sample_input(int& dx, int& dy, bool& quit) {
+static void sample_input(int& dx, int& dy, bool& reach, bool& quit) {
     dx = 0;
     dy = 0;
+    reach = false;
     quit = false;
+
+    // Reach arm window: space must be pressed before movement key.
+    static bool reach_armed = false;
+    static auto reach_armed_at = std::chrono::steady_clock::now();
+    constexpr auto reach_arm_timeout = std::chrono::milliseconds(350);
+
+    const auto now = std::chrono::steady_clock::now();
+    if (now - reach_armed_at > reach_arm_timeout) {
+        reach_armed = false;
+    }
+
     int key = 0;
-    int last = 0;
-    while ((key = get_key_nonblock()) != 0)
-        last = key;
-    if (last == 0) return;
-    if (last == 'q' || last == 'Q') { quit = true; return; }
-    if (last == 'w' || last == 'W') dy = -1;
-    else if (last == 's' || last == 'S') dy = 1;
-    else if (last == 'a' || last == 'A') dx = -1;
-    else if (last == 'd' || last == 'D') dx = 1;
+    while ((key = get_key_nonblock()) != 0) {
+        if (key == 'q' || key == 'Q') {
+            quit = true;
+            return;
+        }
+        if (key == ' ') {
+            reach_armed = true;
+            reach_armed_at = std::chrono::steady_clock::now();
+            continue;
+        }
+
+        int ndx = 0, ndy = 0;
+        if (key == 'w' || key == 'W') ndy = -1;
+        else if (key == 's' || key == 'S') ndy = 1;
+        else if (key == 'a' || key == 'A') ndx = -1;
+        else if (key == 'd' || key == 'D') ndx = 1;
+        else continue;
+
+        dx = ndx;
+        dy = ndy;
+        reach = reach_armed;
+        reach_armed = false; // consume arm on first movement key
+    }
 }
 
 static void build_test_level(consoledash::ConsoleDash& game) {
@@ -95,7 +120,7 @@ static void build_test_level(consoledash::ConsoleDash& game) {
     game.set_cell(18, 8, Tile::DIAMOND);
 
     game.set_cell(25, 6, Tile::FIREFLY, static_cast<uint8_t>(consoledash::Direction::LEFT));
-    game.set_cell(28, 10, Tile::BUTTERFLY, static_cast<uint8_t>(consoledash::Direction::UP));
+    game.set_cell(24, 10, Tile::BUTTERFLY, static_cast<uint8_t>(consoledash::Direction::UP));
 
     game.set_cell(20, 12, Tile::AMOEBA);
     game.set_cell(22, 14, Tile::MAGIC_WALL);
@@ -110,17 +135,18 @@ int main() {
     consoledash::ConsoleDash game;
     build_test_level(game);
 
-    constexpr auto tick_interval = std::chrono::milliseconds(120);
+    constexpr auto tick_interval = std::chrono::milliseconds(250);
     auto next_tick = std::chrono::steady_clock::now();
 
     game.render();
     while (game.is_alive()) {
         int dx = 0, dy = 0;
+        bool reach = false;
         bool quit = false;
-        sample_input(dx, dy, quit);
+        sample_input(dx, dy, reach, quit);
         if (quit) break;
 
-        game.set_input(dx, dy);
+        game.set_input(dx, dy, reach);
         game.tick();
         game.render();
 

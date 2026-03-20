@@ -49,6 +49,11 @@ bool ConsoleDash::in_bounds(int x, int y) const {
     return x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT;
 }
 
+bool ConsoleDash::is_space(int x, int y) const {
+    if (!in_bounds(x, y)) return false;
+    return grid_[x][y].tile == Tile::SPACE;
+}
+
 bool ConsoleDash::is_empty_or_dirt(int x, int y) const {
     if (!in_bounds(x, y)) return false;
     Tile t = grid_[x][y].tile;
@@ -63,7 +68,8 @@ bool ConsoleDash::is_blocking(int x, int y) const {
 }
 
 bool ConsoleDash::can_roll_into(int x, int y) const {
-    return in_bounds(x, y) && (grid_[x][y].tile == Tile::SPACE || grid_[x][y].tile == Tile::DIRT);
+    // Rolling/moving objects may only enter empty space (not dirt).
+    return in_bounds(x, y) && grid_[x][y].tile == Tile::SPACE;
 }
 
 void ConsoleDash::mark_moved(int x, int y) {
@@ -115,15 +121,29 @@ void ConsoleDash::set_exit(int x, int y) {
     set_cell(x, y, Tile::EXIT);
 }
 
-void ConsoleDash::set_input(int dx, int dy) {
+void ConsoleDash::set_input(int dx, int dy, bool reach) {
     pending_dx_ = dx;
     pending_dy_ = dy;
+    pending_reach_ = reach;
 }
 
 void ConsoleDash::tick() {
     for (int x = 0; x < WIDTH; ++x)
         for (int y = 0; y < HEIGHT; ++y)
             moved_[x][y] = false;
+
+    // Apply player input at the beginning of the tick.
+    // Rockford acts once per tick (move or reach), otherwise stays.
+    if (!game_over_ && !player_wins_) {
+        if (pending_reach_) {
+            try_reach_rockford(pending_dx_, pending_dy_);
+        } else {
+            try_move_rockford(pending_dx_, pending_dy_);
+        }
+        pending_dx_ = 0;
+        pending_dy_ = 0;
+        pending_reach_ = false;
+    }
 
     // Scan order: top-left to bottom-right
     for (int y = 0; y < HEIGHT && !game_over_ && !player_wins_; ++y)
@@ -172,22 +192,23 @@ void ConsoleDash::process_cell(int x, int y) {
 
 void ConsoleDash::process_rock_or_diamond(int x, int y) {
     Tile tile = grid_[x][y].tile;
+    bool was_falling = grid_[x][y].was_falling;
     int nx = x, ny = y + 1;
     if (!in_bounds(nx, ny)) return;
 
     Cell& below = grid_[nx][ny];
-    // Below is Rockford -> fall onto him and crush
+    // Below is Rockford: stationary rock is safe; a rock/diamond that was falling
+    // (moved down in the previous tick) crushes on this tick.
     if (below.tile == Tile::ROCKFORD) {
-        game_over_ = true;
-        set_cell_internal(nx, ny, tile, 0, true, 0);
-        clear_cell(x, y);
-        mark_moved(x, y);
-        mark_moved(nx, ny);
+        if (was_falling) {
+            game_over_ = true;
+        }
+        grid_[x][y].was_falling = false; // consume falling marker (only one tick)
         return;
     }
 
-    // Gravity: below is empty or dirt -> fall
-    if (is_empty_or_dirt(nx, ny)) {
+    // Gravity: below must be empty space -> fall
+    if (is_space(nx, ny)) {
         set_cell_internal(nx, ny, tile, 0, true, 0);
         clear_cell(x, y);
         mark_moved(x, y);
@@ -197,17 +218,25 @@ void ConsoleDash::process_rock_or_diamond(int x, int y) {
 
     // Below is firefly/butterfly -> explosion (only when falling onto them)
     if (below.tile == Tile::FIREFLY) {
-        explode_firefly(nx, ny);
-        clear_cell(x, y);
-        mark_moved(x, y);
-        mark_moved(nx, ny);
+        if (was_falling) {
+            explode_firefly(nx, ny);
+            clear_cell(x, y);
+            mark_moved(x, y);
+            mark_moved(nx, ny);
+        } else {
+            grid_[x][y].was_falling = false; // consume marker
+        }
         return;
     }
     if (below.tile == Tile::BUTTERFLY) {
-        explode_butterfly(nx, ny);
-        clear_cell(x, y);
-        mark_moved(x, y);
-        mark_moved(nx, ny);
+        if (was_falling) {
+            explode_butterfly(nx, ny);
+            clear_cell(x, y);
+            mark_moved(x, y);
+            mark_moved(nx, ny);
+        } else {
+            grid_[x][y].was_falling = false; // consume marker
+        }
         return;
     }
 
@@ -216,12 +245,14 @@ void ConsoleDash::process_rock_or_diamond(int x, int y) {
         below.magic_timer = MAGIC_WALL_DURATION;
         Tile converted = (tile == Tile::ROCK) ? Tile::DIAMOND : Tile::ROCK;
         int tx = nx, ty = ny + 1;
-        if (in_bounds(tx, ty) && is_empty_or_dirt(tx, ty)) {
+        if (in_bounds(tx, ty) && is_space(tx, ty)) {
             set_cell_internal(tx, ty, converted, 0, true, 0);
             clear_cell(x, y);
             mark_moved(x, y);
             mark_moved(tx, ty);
         }
+        // Even if conversion couldn't happen, a falling marker only lasts one tick.
+        grid_[x][y].was_falling = false;
         return;
     }
 
@@ -245,6 +276,9 @@ void ConsoleDash::process_rock_or_diamond(int x, int y) {
         mark_moved(x + 1, y + 1);
         return;
     }
+
+    // If we didn't move down this tick, we consumed the falling marker.
+    grid_[x][y].was_falling = false;
 }
 
 void ConsoleDash::process_firefly(int x, int y) {
@@ -259,6 +293,16 @@ void ConsoleDash::process_firefly(int x, int y) {
         }
     }
 
+    // Firefly explodes when it touches amoeba (cardinal adjacency).
+    for (int d = 0; d < 4; ++d) {
+        int dx = dx_for(static_cast<Direction>(d));
+        int dy = dy_for(static_cast<Direction>(d));
+        if (in_bounds(x + dx, y + dy) && grid_[x + dx][y + dy].tile == Tile::AMOEBA) {
+            explode_firefly(x, y);
+            return;
+        }
+    }
+
     Direction facing = static_cast<Direction>(grid_[x][y].facing);
     int lx = x + dx_for(turn_left(facing));
     int ly = y + dy_for(turn_left(facing));
@@ -266,7 +310,7 @@ void ConsoleDash::process_firefly(int x, int y) {
     int fy = y + dy_for(facing);
 
     // 1. Left of facing empty -> turn left, move
-    if (in_bounds(lx, ly) && is_empty_or_dirt(lx, ly)) {
+    if (in_bounds(lx, ly) && is_space(lx, ly)) {
         set_cell_internal(lx, ly, Tile::FIREFLY, static_cast<uint8_t>(turn_left(facing)), false, 0);
         clear_cell(x, y);
         mark_moved(x, y);
@@ -274,7 +318,7 @@ void ConsoleDash::process_firefly(int x, int y) {
         return;
     }
     // 2. Forward empty -> move forward
-    if (in_bounds(fx, fy) && is_empty_or_dirt(fx, fy)) {
+    if (in_bounds(fx, fy) && is_space(fx, fy)) {
         set_cell_internal(fx, fy, Tile::FIREFLY, grid_[x][y].facing, false, 0);
         clear_cell(x, y);
         mark_moved(x, y);
@@ -297,6 +341,16 @@ void ConsoleDash::process_butterfly(int x, int y) {
         }
     }
 
+    // Butterfly explodes when it touches amoeba (cardinal adjacency).
+    for (int d = 0; d < 4; ++d) {
+        int dx = dx_for(static_cast<Direction>(d));
+        int dy = dy_for(static_cast<Direction>(d));
+        if (in_bounds(x + dx, y + dy) && grid_[x + dx][y + dy].tile == Tile::AMOEBA) {
+            explode_butterfly(x, y);
+            return;
+        }
+    }
+
     Direction facing = static_cast<Direction>(grid_[x][y].facing);
     Direction rightOf = turn_right_cw(facing);
     int rx = x + dx_for(rightOf);
@@ -304,14 +358,14 @@ void ConsoleDash::process_butterfly(int x, int y) {
     int fx = x + dx_for(facing);
     int fy = y + dy_for(facing);
 
-    if (in_bounds(rx, ry) && is_empty_or_dirt(rx, ry)) {
+    if (in_bounds(rx, ry) && is_space(rx, ry)) {
         set_cell_internal(rx, ry, Tile::BUTTERFLY, static_cast<uint8_t>(rightOf), false, 0);
         clear_cell(x, y);
         mark_moved(x, y);
         mark_moved(rx, ry);
         return;
     }
-    if (in_bounds(fx, fy) && is_empty_or_dirt(fx, fy)) {
+    if (in_bounds(fx, fy) && is_space(fx, fy)) {
         set_cell_internal(fx, fy, Tile::BUTTERFLY, grid_[x][y].facing, false, 0);
         clear_cell(x, y);
         mark_moved(x, y);
@@ -426,6 +480,11 @@ void ConsoleDash::try_move_rockford(int dx, int dy) {
         return;
     }
     if (target == Tile::DIAMOND) {
+        // Collecting a diamond while it is falling counts as being crushed.
+        if (grid_[tx][ty].was_falling) {
+            game_over_ = true;
+            return;
+        }
         diamonds_collected_++;
         int ox = rockford_x_, oy = rockford_y_;
         clear_cell(ox, oy);
@@ -464,6 +523,42 @@ void ConsoleDash::try_move_rockford(int dx, int dy) {
     }
 }
 
+void ConsoleDash::try_reach_rockford(int dx, int dy) {
+    if (dx == 0 && dy == 0) return;
+    int tx = rockford_x_ + dx;
+    int ty = rockford_y_ + dy;
+    if (!in_bounds(tx, ty)) return;
+
+    Tile target = grid_[tx][ty].tile;
+
+    // Reach collect: collect adjacent diamond without moving.
+    if (target == Tile::DIAMOND) {
+        diamonds_collected_++;
+        clear_cell(tx, ty);
+        mark_moved(tx, ty);
+        return;
+    }
+
+    // Reach push: same push rule as walk-into-rock, but Rockford stays put.
+    if (target == Tile::ROCK) {
+        int bx = tx + dx;
+        int by = ty + dy;
+        if (in_bounds(bx, by) && can_roll_into(bx, by)) {
+            set_cell_internal(bx, by, Tile::ROCK, 0, false, 0);
+            clear_cell(tx, ty);
+            mark_moved(tx, ty);
+            mark_moved(bx, by);
+        }
+        return;
+    }
+
+    // Dirt is digged with reach.
+    if (target == Tile::DIRT) {
+        clear_cell(tx, ty);
+        return;
+    }
+}
+
 void ConsoleDash::render() const {
 #if defined(_WIN32) || defined(_WIN64)
     std::system("cls");
@@ -474,7 +569,7 @@ void ConsoleDash::render() const {
         for (int x = 0; x < WIDTH; ++x) {
             switch (grid_[x][y].tile) {
                 case Tile::SPACE:       std::cout << ' '; break;
-                case Tile::DIRT:        std::cout << '.'; break;
+                case Tile::DIRT:        std::cout << "\u00B7"; break; // middle dot
                 case Tile::WALL:        std::cout << '#'; break;
                 case Tile::ROCK:        std::cout << 'O'; break;
                 case Tile::DIAMOND:     std::cout << '*'; break;
@@ -483,7 +578,9 @@ void ConsoleDash::render() const {
                 case Tile::AMOEBA:      std::cout << '~'; break;
                 case Tile::MAGIC_WALL:  std::cout << 'M'; break;
                 case Tile::ROCKFORD:    std::cout << '@'; break;
-                case Tile::EXIT:        std::cout << 'X'; break;
+                case Tile::EXIT:
+                    std::cout << (diamonds_collected_ >= diamonds_required_ ? 'X' : 'x');
+                    break;
             }
         }
         std::cout << '\n';

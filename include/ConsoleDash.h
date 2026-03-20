@@ -38,7 +38,7 @@ public:
     ConsoleDash();
 
     void tick();
-    void set_input(int dx, int dy);
+    void set_input(int dx, int dy, bool reach = false);
     void render() const;
 
     int rockford_x() const { return rockford_x_; }
@@ -61,6 +61,7 @@ private:
     int rockford_y_ = 0;
     int pending_dx_ = 0;
     int pending_dy_ = 0;
+    bool pending_reach_ = false;
     int diamonds_collected_ = 0;
     int diamonds_required_ = 0;
     bool game_over_ = false;
@@ -72,6 +73,7 @@ private:
     static constexpr int MAGIC_WALL_DURATION = 200;
 
     bool in_bounds(int x, int y) const;
+    bool is_space(int x, int y) const; // moving objects can only enter empty space
     bool is_empty_or_dirt(int x, int y) const;
     bool is_blocking(int x, int y) const;
     bool can_roll_into(int x, int y) const;
@@ -94,6 +96,7 @@ private:
 
     void post_tick_amoeba();
     void try_move_rockford(int dx, int dy);
+    void try_reach_rockford(int dx, int dy);
 };
 
 } // namespace consoledash
