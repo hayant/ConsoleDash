@@ -67,6 +67,12 @@ bool ConsoleDash::is_blocking(int x, int y) const {
            t == Tile::MAGIC_WALL || t == Tile::EXIT;
 }
 
+bool ConsoleDash::can_roll_over(int x, int y) const {
+    if (!in_bounds(x, y)) return true;
+    Tile t = grid_[x][y].tile;
+    return t == Tile::WALL || t == Tile::ROCK || t == Tile::DIAMOND;
+}
+
 bool ConsoleDash::can_roll_into(int x, int y) const {
     // Rolling/moving objects may only enter empty space (not dirt).
     return in_bounds(x, y) && grid_[x][y].tile == Tile::SPACE;
@@ -201,7 +207,10 @@ void ConsoleDash::process_rock_or_diamond(int x, int y) {
     Tile tile = grid_[x][y].tile;
     bool was_falling = grid_[x][y].was_falling;
     int nx = x, ny = y + 1;
-    if (!in_bounds(nx, ny)) return;
+    if (!in_bounds(nx, ny)) {
+        grid_[x][y].was_falling = false;
+        return;
+    }
 
     Cell& below = grid_[nx][ny];
     // Below is Rockford: stationary rock is safe; a rock/diamond that was falling
@@ -264,7 +273,11 @@ void ConsoleDash::process_rock_or_diamond(int x, int y) {
     }
 
     // Below is blocking (wall, rock, diamond) -> try roll
-    if (!is_blocking(nx, ny)) return;
+    if (!is_blocking(nx, ny)) {
+        // No downward movement this tick -> falling marker is consumed.
+        grid_[x][y].was_falling = false;
+        return;
+    }
     bool downLeft = can_roll_into(x - 1, y + 1);
     bool downRight = can_roll_into(x + 1, y + 1);
     bool leftFree = !is_blocking(x - 1, y);

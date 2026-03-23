@@ -82,6 +82,7 @@ private:
     bool is_space(int x, int y) const; // moving objects can only enter empty space
     bool is_empty_or_dirt(int x, int y) const;
     bool is_blocking(int x, int y) const;
+    bool can_roll_over(int x, int y) const;
     bool can_roll_into(int x, int y) const;
     void mark_moved(int x, int y);
     bool was_moved(int x, int y) const;
