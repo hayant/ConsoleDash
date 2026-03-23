@@ -22,12 +22,12 @@ void ConsoleDash::process_rock_or_diamond(int x, int y) {
     if (below.tile == Tile::ROCKFORD) { if (was_falling) game_over_ = true; grid_[x][y].was_falling = false; return; }
     if (is_space(nx, ny)) { set_cell_internal(nx, ny, tile, 0, true, 0); clear_cell(x, y); mark_moved(x, y); mark_moved(nx, ny); return; }
     if (below.tile == Tile::FIREFLY) {
-        if (was_falling) { explode_firefly(nx, ny); clear_cell(x, y); mark_moved(x, y); mark_moved(nx, ny); }
+        if (was_falling) { explode_firefly(nx, ny); mark_moved(x, y); mark_moved(nx, ny); }
         else grid_[x][y].was_falling = false;
         return;
     }
     if (below.tile == Tile::BUTTERFLY) {
-        if (was_falling) { explode_butterfly(nx, ny); clear_cell(x, y); mark_moved(x, y); mark_moved(nx, ny); }
+        if (was_falling) { explode_butterfly(nx, ny); mark_moved(x, y); mark_moved(nx, ny); }
         else grid_[x][y].was_falling = false;
         return;
     }
