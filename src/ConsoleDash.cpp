@@ -72,8 +72,7 @@ bool ConsoleDash::is_blocking(int x, int y) const {
 bool ConsoleDash::can_roll_over(int x, int y) const {
     if (!in_bounds(x, y)) return true;
     Tile t = grid_[x][y].tile;
-    return t == Tile::TITANIUM_WALL || t == Tile::WALL || t == Tile::ROCK || t == Tile::DIAMOND ||
-           t == Tile::MAGIC_WALL || t == Tile::EXIT || t == Tile::EXPLOSION || t == Tile::DIRT;
+    return t == Tile::WALL || t == Tile::ROCK || t == Tile::DIAMOND;
 }
 
 bool ConsoleDash::can_roll_into(int x, int y) const {
