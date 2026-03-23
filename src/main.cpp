@@ -282,9 +282,9 @@ int main(int argc, char** argv) {
     restore_input();
     game.render();
     if (game.player_wins())
-        std::cout << "You win! Diamonds: " << game.diamonds_collected() << std::endl;
+        std::cout << std::endl << "You win! Diamonds: " << game.diamonds_collected() << std::endl;
     else if (game.game_over())
-        std::cout << "Game Over!" << std::endl;
+        std::cout << std::endl << "Game Over!" << std::endl;
 
     return 0;
 }

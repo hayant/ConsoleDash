@@ -1,5 +1,4 @@
 #include "ConsoleDash.h"
-#include <iostream>
 #include <cstdlib>
 #include <string>
 #include <cstdio>
@@ -27,7 +26,6 @@ void ConsoleDash::render() const {
     constexpr const char* C_MAGENTA = "\033[35m";
     constexpr const char* C_BRIGHT_GREEN = "\033[92m";
     constexpr const char* C_BLUE = "\033[34m";
-    constexpr const char* C_BRIGHT_RED = "\033[91m";
 
     auto add_colored = [&](const char* color, const std::string& glyph) { frame += color; frame += glyph; frame += RESET; };
     auto add_colored_char = [&](const char* color, char glyph) { frame += color; frame += glyph; frame += RESET; };
@@ -37,6 +35,7 @@ void ConsoleDash::render() const {
 #else
     std::system("clear");
 #endif
+
     frame.reserve((level_width_ + 1) * level_height_ * 8);
     frame += "\033[H";
 
@@ -68,10 +67,14 @@ void ConsoleDash::render() const {
         }
         frame += '\n';
     }
+    frame += "Diamonds: ";
+    frame += std::to_string(diamonds_collected_);
+    frame += '/';
+    frame += std::to_string(diamonds_required_);
+    frame += "  [WASD] Move  [Q] Quit";
 
     fwrite(frame.data(), 1, frame.size(), stdout);
     fflush(stdout);
-    std::cout << "Diamonds: " << diamonds_collected_ << '/' << diamonds_required_ << "  [WASD] Move  [Q] Quit";
 }
 
 } // namespace consoledash
