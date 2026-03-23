@@ -64,14 +64,16 @@ bool ConsoleDash::is_blocking(int x, int y) const {
     if (!in_bounds(x, y)) return true;
     Tile t = grid_[x][y].tile;
     return t == Tile::TITANIUM_WALL || t == Tile::WALL || t == Tile::ROCK || t == Tile::DIAMOND ||
-           t == Tile::MAGIC_WALL || t == Tile::EXIT || t == Tile::DIRT || t == Tile::ROCKFORD ||
+           t == Tile::MAGIC_WALL || t == Tile::EXIT || t == Tile::EXPLOSION ||
+           t == Tile::DIRT || t == Tile::ROCKFORD ||
            t == Tile::AMOEBA;
 }
 
 bool ConsoleDash::can_roll_over(int x, int y) const {
     if (!in_bounds(x, y)) return true;
     Tile t = grid_[x][y].tile;
-    return t == Tile::WALL || t == Tile::ROCK || t == Tile::DIAMOND;
+    return t == Tile::TITANIUM_WALL || t == Tile::WALL || t == Tile::ROCK || t == Tile::DIAMOND ||
+           t == Tile::MAGIC_WALL || t == Tile::EXIT || t == Tile::EXPLOSION || t == Tile::DIRT;
 }
 
 bool ConsoleDash::can_roll_into(int x, int y) const {
@@ -93,6 +95,10 @@ void ConsoleDash::set_cell_internal(int x, int y, Tile t, uint8_t facing, bool f
     grid_[x][y].facing = facing;
     grid_[x][y].was_falling = falling;
     grid_[x][y].magic_timer = magic_timer;
+    if (t != Tile::EXPLOSION) {
+        grid_[x][y].explosion_stage = 0;
+        grid_[x][y].explosion_result = Tile::SPACE;
+    }
 }
 
 void ConsoleDash::clear_cell(int x, int y) {
@@ -101,6 +107,8 @@ void ConsoleDash::clear_cell(int x, int y) {
     grid_[x][y].facing = 0;
     grid_[x][y].was_falling = false;
     grid_[x][y].magic_timer = 0;
+    grid_[x][y].explosion_stage = 0;
+    grid_[x][y].explosion_result = Tile::SPACE;
 }
 
 void ConsoleDash::set_cell(int x, int y, Tile t, uint8_t facing) {
@@ -140,6 +148,7 @@ void ConsoleDash::advance_animation() {
 
 void ConsoleDash::tick() {
     std::lock_guard<std::mutex> lock(state_mutex_);
+    advance_explosions();
 
     for (int x = 0; x < WIDTH; ++x)
         for (int y = 0; y < HEIGHT; ++y)
@@ -180,6 +189,7 @@ void ConsoleDash::process_cell(int x, int y) {
         case Tile::DIRT:
         case Tile::TITANIUM_WALL:
         case Tile::WALL:
+        case Tile::EXPLOSION:
         case Tile::EXIT:
             break;
         case Tile::ROCK:
@@ -447,9 +457,25 @@ void ConsoleDash::explode_at(int cx, int cy, Tile fill) {
             // Titanium wall is indestructible. Regular wall is consumable by explosion fill.
             if (grid_[x][y].tile == Tile::TITANIUM_WALL) continue;
             if (grid_[x][y].tile == Tile::ROCKFORD) game_over_ = true;
-            set_cell_internal(x, y, fill, 0, false, 0);
+            set_cell_internal(x, y, Tile::EXPLOSION, 0, false, 0);
+            grid_[x][y].explosion_stage = 0;
+            grid_[x][y].explosion_result = fill;
             mark_moved(x, y);
         }
+}
+
+void ConsoleDash::advance_explosions() {
+    for (int x = 0; x < WIDTH; ++x) {
+        for (int y = 0; y < HEIGHT; ++y) {
+            if (grid_[x][y].tile != Tile::EXPLOSION) continue;
+            if (grid_[x][y].explosion_stage < 2) {
+                grid_[x][y].explosion_stage++;
+            } else {
+                Tile result = grid_[x][y].explosion_result;
+                set_cell_internal(x, y, result, 0, false, 0);
+            }
+        }
+    }
 }
 
 void ConsoleDash::post_tick_amoeba() {
@@ -615,6 +641,7 @@ void ConsoleDash::render() const {
     constexpr const char* C_BRIGHT_GREEN = "\033[92m";
     constexpr const char* C_BLUE = "\033[34m";
     constexpr const char* C_RED = "\033[31m";
+    constexpr const char* C_BRIGHT_RED = "\033[91m";
 
     auto add_colored = [&](const char* color, const std::string& glyph) {
         frame += color;
@@ -650,6 +677,13 @@ void ConsoleDash::render() const {
                 case Tile::WALL:
                     add_colored_char(C_BLUE, '%');
                     break;
+                case Tile::EXPLOSION: {
+                    char mark = 'a';
+                    if (grid_[x][y].explosion_stage == 1) mark = 'b';
+                    else if (grid_[x][y].explosion_stage >= 2) mark = 'c';
+                    add_colored_char(C_BRIGHT_RED, mark);
+                    break;
+                }
                 case Tile::ROCK:
                     add_colored_char(C_GRAY, 'O');
                     break;

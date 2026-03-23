@@ -15,6 +15,7 @@ enum class Tile : uint8_t {
     SPACE,
     DIRT,
     WALL,
+    EXPLOSION,
     ROCK,
     DIAMOND,
     FIREFLY,
@@ -34,6 +35,8 @@ struct Cell {
     uint8_t facing = 0;
     bool was_falling = false;
     int magic_timer = 0;
+    uint8_t explosion_stage = 0; // 0..2 while in explosion state
+    Tile explosion_result = Tile::SPACE; // final tile when explosion ends
 };
 
 class ConsoleDash {
@@ -99,6 +102,7 @@ private:
     void explode_firefly(int x, int y);
     void explode_butterfly(int x, int y);
     void explode_at(int cx, int cy, Tile fill);
+    void advance_explosions();
 
     void post_tick_amoeba();
     void try_move_rockford(int dx, int dy);
