@@ -169,7 +169,8 @@ static bool load_level_from_file(const std::string& path, consoledash::ConsoleDa
     bool has_rockford = false;
     for (int y = 0; y < level_height; ++y) {
         for (int x = 0; x < level_width; ++x) {
-            char ch = '.';
+            // Missing columns in shorter lines are treated as empty space.
+            char ch = ' ';
             if (y < static_cast<int>(lines.size()) && x < static_cast<int>(lines[y].size())) {
                 ch = lines[y][x];
             }
