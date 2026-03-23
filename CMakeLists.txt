@@ -7,6 +7,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Core game/engine library (Pitchfork: src/ + include/)
 add_library(ConsoleDashLib
     src/ConsoleDash.cpp
+    src/ConsoleDashLogic.cpp
+    src/ConsoleDashRender.cpp
 )
 
 target_include_directories(ConsoleDashLib
