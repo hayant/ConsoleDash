@@ -3,6 +3,9 @@
 #include <chrono>
 #include <thread>
 #include <atomic>
+#include <fstream>
+#include <string>
+#include <vector>
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <conio.h>
@@ -130,11 +133,95 @@ static void build_test_level(consoledash::ConsoleDash& game) {
     game.set_diamonds_required(3);
 }
 
-int main() {
+static bool load_level_from_file(const std::string& path, consoledash::ConsoleDash& game) {
+    using namespace consoledash;
+    std::ifstream in(path);
+    if (!in.is_open()) {
+        return false;
+    }
+
+    std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(in, line)) {
+        lines.push_back(line);
+    }
+
+    bool has_rockford = false;
+    for (int y = 0; y < HEIGHT; ++y) {
+        for (int x = 0; x < WIDTH; ++x) {
+            char ch = '.';
+            if (y < static_cast<int>(lines.size()) && x < static_cast<int>(lines[y].size())) {
+                ch = lines[y][x];
+            }
+
+            switch (ch) {
+                case '@':
+                    game.set_cell(x, y, Tile::SPACE);
+                    game.set_rockford(x, y);
+                    has_rockford = true;
+                    break;
+                case '#':
+                    game.set_cell(x, y, Tile::TITANIUM_WALL);
+                    break;
+                case 'W':
+                    game.set_cell(x, y, Tile::WALL);
+                    break;
+                case 'R':
+                    game.set_cell(x, y, Tile::ROCK);
+                    break;
+                case 'F':
+                    game.set_cell(x, y, Tile::FIREFLY);
+                    break;
+                case 'B':
+                    game.set_cell(x, y, Tile::BUTTERFLY);
+                    break;
+                case 'A':
+                    game.set_cell(x, y, Tile::AMOEBA);
+                    break;
+                case 'M':
+                    game.set_cell(x, y, Tile::MAGIC_WALL);
+                    break;
+                case 'E':
+                    game.set_cell(x, y, Tile::EXIT);
+                    break;
+                case ' ':
+                    game.set_cell(x, y, Tile::SPACE);
+                    break;
+                case '.':
+                    game.set_cell(x, y, Tile::DIRT);
+                    break;
+                case 'D': // backwards-compatible convenience for existing level files
+                    game.set_cell(x, y, Tile::DIAMOND);
+                    break;
+                default:
+                    // Unknown characters are interpreted as dirt.
+                    game.set_cell(x, y, Tile::DIRT);
+                    break;
+            }
+        }
+    }
+
+    if (!has_rockford) {
+        game.set_rockford(1, 1);
+    }
+    game.set_diamonds_required(3);
+    return true;
+}
+
+int main(int argc, char** argv) {
     init_input();
 
     consoledash::ConsoleDash game;
-    build_test_level(game);
+    if (argc >= 2) {
+        const std::string level_path = argv[1];
+        if (!load_level_from_file(level_path, game)) {
+            restore_input();
+            std::cerr << "Error: Could not open level file: " << level_path << '\n';
+            return 1;
+        }
+    } else {
+        build_test_level(game);
+    }
 
     constexpr auto game_tick_interval = std::chrono::milliseconds(250);
     constexpr auto animation_tick_interval = std::chrono::milliseconds(200);
