@@ -60,7 +60,14 @@ void ConsoleDash::render() const {
                 case Tile::FIREFLY: add_colored_char(C_BRIGHT_YELLOW, firefly_mark(anim_frame_per_three)); break;
                 case Tile::BUTTERFLY: add_colored_char(C_MAGENTA, butterfly_mark(anim_frame_per_three)); break;
                 case Tile::AMOEBA: add_colored_char(C_BRIGHT_GREEN, (anim_even ? '~' : '-')); break;
-                case Tile::MAGIC_WALL: add_colored_char(C_BLUE, 'M'); break;
+                case Tile::MAGIC_WALL: {
+                    if (grid_[x][y].magic_timer > 0) {
+                        add_colored(C_BLUE, (anim_even ? "%" : "°"));
+                    } else {
+                        add_colored_char(C_BLUE, '%');
+                    }
+                    break;
+                }
                 case Tile::ROCKFORD: add_colored_char(C_BRIGHT_GREEN, '@'); break;
                 case Tile::EXIT: add_colored_char(C_WHITE, (diamonds_collected_ >= diamonds_required_ ? (anim_even ? ' ' : '#') : '#')); break;
             }
