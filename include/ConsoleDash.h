@@ -74,6 +74,7 @@ private:
     mutable std::mutex state_mutex_;
 
     int amoeba_growth_counter_ = 0;
+    int amoeba_current_size_ = 0;
     static constexpr int AMOEBA_GROWTH_INTERVAL = 4;
     static constexpr int AMOEBA_MAX_SIZE = 150;
     static constexpr int MAGIC_WALL_DURATION = 200;

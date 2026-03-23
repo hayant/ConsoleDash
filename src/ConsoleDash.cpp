@@ -451,12 +451,12 @@ void ConsoleDash::explode_at(int cx, int cy, Tile fill) {
 }
 
 void ConsoleDash::post_tick_amoeba() {
-    int count = 0;
+    amoeba_current_size_ = 0;
     bool has_growth_option = false;
     for (int x = 0; x < WIDTH; ++x)
         for (int y = 0; y < HEIGHT; ++y) {
             if (grid_[x][y].tile != Tile::AMOEBA) continue;
-            count++;
+            amoeba_current_size_++;
             for (int d = 0; d < 4; ++d) {
                 int dx = (d == 0) ? -1 : (d == 1) ? 1 : 0;
                 int dy = (d == 2) ? -1 : (d == 3) ? 1 : 0;
@@ -469,14 +469,14 @@ void ConsoleDash::post_tick_amoeba() {
                     has_growth_option = true;
             }
         }
-    if (count >= AMOEBA_MAX_SIZE) {
+    if (amoeba_current_size_ >= AMOEBA_MAX_SIZE) {
         for (int x = 0; x < WIDTH; ++x)
             for (int y = 0; y < HEIGHT; ++y)
                 if (grid_[x][y].tile == Tile::AMOEBA)
                     set_cell_internal(x, y, Tile::ROCK, 0, false, 0);
         return;
     }
-    if (!has_growth_option && count > 0) {
+    if (!has_growth_option && amoeba_current_size_ > 0) {
         for (int x = 0; x < WIDTH; ++x)
             for (int y = 0; y < HEIGHT; ++y)
                 if (grid_[x][y].tile == Tile::AMOEBA)
@@ -604,6 +604,27 @@ void ConsoleDash::render() const {
     std::string frame;
     const bool anim_even = (animation_counter_.load(std::memory_order_relaxed) % 2) == 0;
     const int anim_frame_per_three = animation_counter_.load(std::memory_order_relaxed) % 3;
+    constexpr const char* RESET = "\033[0m";
+    constexpr const char* C_DIM_YELLOW = "\033[2;33m";
+    constexpr const char* C_WHITE = "\033[37m";
+    constexpr const char* C_GRAY = "\033[90m";
+    constexpr const char* C_BRIGHT_CYAN = "\033[96m";
+    constexpr const char* C_BRIGHT_YELLOW = "\033[93m";
+    constexpr const char* C_MAGENTA = "\033[35m";
+    constexpr const char* C_BRIGHT_GREEN = "\033[92m";
+    constexpr const char* C_BLUE = "\033[34m";
+    constexpr const char* C_RED = "\033[31m";
+
+    auto add_colored = [&](const char* color, const std::string& glyph) {
+        frame += color;
+        frame += glyph;
+        frame += RESET;
+    };
+    auto add_colored_char = [&](const char* color, char glyph) {
+        frame += color;
+        frame += glyph;
+        frame += RESET;
+    };
 
 #if defined(_WIN32) || defined(_WIN64)
     std::system("cls");
@@ -616,20 +637,42 @@ void ConsoleDash::render() const {
     for (int y = 0; y < HEIGHT; ++y) {
         for (int x = 0; x < WIDTH; ++x) {
             switch (grid_[x][y].tile) {
-                case Tile::SPACE:     frame += ' ';    break;
-                case Tile::DIRT:      frame += "\u00B7"; break;
-                case Tile::TITANIUM_WALL: frame += '#'; break;
-                case Tile::WALL:      frame += '%';    break;
-                case Tile::ROCK:      frame += 'O';    break;
-                case Tile::DIAMOND:   frame += '*';    break;
-                case Tile::FIREFLY:   frame += firefly_mark(anim_frame_per_three); break;
-                case Tile::BUTTERFLY: frame += butterfly_mark(anim_frame_per_three); break;
-                case Tile::AMOEBA:    frame += (anim_even ? '~' : '-');    break;
-                case Tile::MAGIC_WALL:frame += 'M';    break;
-                case Tile::ROCKFORD:  frame += '@';    break;
+                case Tile::SPACE:
+                    frame += ' ';
+                    break;
+                case Tile::DIRT:
+                    add_colored(C_DIM_YELLOW, "\u00B7");
+                    break;
+                case Tile::TITANIUM_WALL:
+                    add_colored_char(C_WHITE, '#');
+                    break;
+                case Tile::WALL:
+                    add_colored_char(C_BLUE, '%');
+                    break;
+                case Tile::ROCK:
+                    add_colored_char(C_GRAY, 'O');
+                    break;
+                case Tile::DIAMOND:
+                    add_colored_char(C_BRIGHT_CYAN, '*');
+                    break;
+                case Tile::FIREFLY:
+                    add_colored_char(C_BRIGHT_YELLOW, firefly_mark(anim_frame_per_three));
+                    break;
+                case Tile::BUTTERFLY:
+                    add_colored_char(C_MAGENTA, butterfly_mark(anim_frame_per_three));
+                    break;
+                case Tile::AMOEBA:
+                    add_colored_char(C_BRIGHT_GREEN, (anim_even ? '~' : '-'));
+                    break;
+                case Tile::MAGIC_WALL:
+                    add_colored_char(C_BLUE, 'M');
+                    break;
+                case Tile::ROCKFORD:
+                    add_colored_char(C_BRIGHT_GREEN, '@');
+                    break;
                 case Tile::EXIT:
-                    frame += (diamonds_collected_ >= diamonds_required_
-                              ? (anim_even ? ' ' : '#') : '#');
+                    add_colored_char(C_WHITE, (diamonds_collected_ >= diamonds_required_
+                                             ? (anim_even ? ' ' : '#') : '#'));
                     break;
             }
         }
