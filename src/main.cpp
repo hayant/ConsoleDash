@@ -99,12 +99,12 @@ static void build_test_level(consoledash::ConsoleDash& game) {
     const int H = consoledash::HEIGHT;
 
     for (int x = 0; x < W; ++x) {
-        game.set_cell(x, 0, Tile::WALL);
-        game.set_cell(x, H - 1, Tile::WALL);
+        game.set_cell(x, 0, Tile::TITANIUM_WALL);
+        game.set_cell(x, H - 1, Tile::TITANIUM_WALL);
     }
     for (int y = 0; y < H; ++y) {
-        game.set_cell(0, y, Tile::WALL);
-        game.set_cell(W - 1, y, Tile::WALL);
+        game.set_cell(0, y, Tile::TITANIUM_WALL);
+        game.set_cell(W - 1, y, Tile::TITANIUM_WALL);
     }
 
     for (int y = 1; y < H - 1; ++y)

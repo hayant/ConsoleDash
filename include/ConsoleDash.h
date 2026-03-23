@@ -23,6 +23,7 @@ enum class Tile : uint8_t {
     MAGIC_WALL,
     ROCKFORD,
     EXIT,
+    TITANIUM_WALL,
 };
 
 // 0=Up, 1=Left, 2=Down, 3=Right (CCW order for firefly; butterfly uses CW)

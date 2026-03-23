@@ -63,7 +63,7 @@ bool ConsoleDash::is_empty_or_dirt(int x, int y) const {
 bool ConsoleDash::is_blocking(int x, int y) const {
     if (!in_bounds(x, y)) return true;
     Tile t = grid_[x][y].tile;
-    return t == Tile::WALL || t == Tile::ROCK || t == Tile::DIAMOND ||
+    return t == Tile::TITANIUM_WALL || t == Tile::WALL || t == Tile::ROCK || t == Tile::DIAMOND ||
            t == Tile::MAGIC_WALL || t == Tile::EXIT;
 }
 
@@ -171,6 +171,7 @@ void ConsoleDash::process_cell(int x, int y) {
     switch (t) {
         case Tile::SPACE:
         case Tile::DIRT:
+        case Tile::TITANIUM_WALL:
         case Tile::WALL:
         case Tile::EXIT:
             break;
@@ -427,7 +428,8 @@ void ConsoleDash::explode_at(int cx, int cy, Tile fill) {
         for (int dx = -1; dx <= 1; ++dx) {
             int x = cx + dx, y = cy + dy;
             if (!in_bounds(x, y)) continue;
-            if (grid_[x][y].tile == Tile::WALL) continue;
+            // Titanium wall is indestructible. Regular wall is consumable by explosion fill.
+            if (grid_[x][y].tile == Tile::TITANIUM_WALL) continue;
             if (grid_[x][y].tile == Tile::ROCKFORD) game_over_ = true;
             set_cell_internal(x, y, fill, 0, false, 0);
             mark_moved(x, y);
@@ -602,7 +604,8 @@ void ConsoleDash::render() const {
             switch (grid_[x][y].tile) {
                 case Tile::SPACE:     frame += ' ';    break;
                 case Tile::DIRT:      frame += "\u00B7"; break;
-                case Tile::WALL:      frame += '#';    break;
+                case Tile::TITANIUM_WALL: frame += '#'; break;
+                case Tile::WALL:      frame += '%';    break;
                 case Tile::ROCK:      frame += 'O';    break;
                 case Tile::DIAMOND:   frame += '*';    break;
                 case Tile::FIREFLY:   frame += firefly_mark(anim_frame_per_three); break;
