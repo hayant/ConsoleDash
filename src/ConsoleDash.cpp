@@ -397,10 +397,12 @@ void ConsoleDash::process_butterfly(int x, int y) {
 }
 
 void ConsoleDash::process_amoeba(int x, int y) {
-    if (amoeba_growth_counter_ % AMOEBA_GROWTH_INTERVAL != 0) return;
+    static std::mt19937 growth_rng(std::random_device{}());
+    int rand_number = std::uniform_int_distribution<int>(0, AMOEBA_MAX_SIZE / 2 - amoeba_current_size_ / 2)(growth_rng);
+    if (rand_number != 0) return;
 
     int order[4] = {0, 1, 2, 3};
-    static std::mt19937 rng(42);
+    static std::mt19937 rng(std::random_device{}());
     std::shuffle(order, order + 4, rng);
     for (int i = 0; i < 4; ++i) {
         int dx = 0, dy = 0;
@@ -482,7 +484,6 @@ void ConsoleDash::post_tick_amoeba() {
                 if (grid_[x][y].tile == Tile::AMOEBA)
                     set_cell_internal(x, y, Tile::DIAMOND, 0, false, 0);
     }
-    amoeba_growth_counter_++;
 }
 
 void ConsoleDash::try_move_rockford(int dx, int dy) {
