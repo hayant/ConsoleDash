@@ -64,7 +64,8 @@ bool ConsoleDash::is_blocking(int x, int y) const {
     if (!in_bounds(x, y)) return true;
     Tile t = grid_[x][y].tile;
     return t == Tile::TITANIUM_WALL || t == Tile::WALL || t == Tile::ROCK || t == Tile::DIAMOND ||
-           t == Tile::MAGIC_WALL || t == Tile::EXIT;
+           t == Tile::MAGIC_WALL || t == Tile::EXIT || t == Tile::DIRT || t == Tile::ROCKFORD ||
+           t == Tile::AMOEBA;
 }
 
 bool ConsoleDash::can_roll_over(int x, int y) const {
@@ -273,7 +274,7 @@ void ConsoleDash::process_rock_or_diamond(int x, int y) {
     }
 
     // Below is blocking (wall, rock, diamond) -> try roll
-    if (!is_blocking(nx, ny)) {
+    if (!can_roll_over(nx, ny)) {
         // No downward movement this tick -> falling marker is consumed.
         grid_[x][y].was_falling = false;
         return;
@@ -283,17 +284,17 @@ void ConsoleDash::process_rock_or_diamond(int x, int y) {
     bool leftFree = !is_blocking(x - 1, y);
     bool rightFree = !is_blocking(x + 1, y);
     if (downLeft && leftFree) {
-        set_cell_internal(x - 1, y + 1, tile, 0, true, 0);
+        set_cell_internal(x - 1, y, tile, 0, true, 0);
         clear_cell(x, y);
         mark_moved(x, y);
-        mark_moved(x - 1, y + 1);
+        mark_moved(x - 1, y);
         return;
     }
     if (downRight && rightFree) {
-        set_cell_internal(x + 1, y + 1, tile, 0, true, 0);
+        set_cell_internal(x + 1, y, tile, 0, true, 0);
         clear_cell(x, y);
         mark_moved(x, y);
-        mark_moved(x + 1, y + 1);
+        mark_moved(x + 1, y);
         return;
     }
 
