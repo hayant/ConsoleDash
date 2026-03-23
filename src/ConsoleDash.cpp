@@ -87,6 +87,7 @@ void ConsoleDash::set_cell_internal(int x, int y, Tile t, uint8_t facing, bool f
     grid_[x][y].magic_timer = magic_timer;
     if (t != Tile::EXPLOSION) {
         grid_[x][y].explosion_stage = 0;
+        grid_[x][y].explosion_source = Tile::SPACE;
         grid_[x][y].explosion_result = Tile::SPACE;
     }
 }
@@ -98,6 +99,7 @@ void ConsoleDash::clear_cell(int x, int y) {
     grid_[x][y].was_falling = false;
     grid_[x][y].magic_timer = 0;
     grid_[x][y].explosion_stage = 0;
+    grid_[x][y].explosion_source = Tile::SPACE;
     grid_[x][y].explosion_result = Tile::SPACE;
 }
 

@@ -38,6 +38,7 @@ struct Cell {
     bool was_falling = false;
     int magic_timer = 0;
     uint8_t explosion_stage = 0; // 0..2 while in explosion state
+    Tile explosion_source = Tile::SPACE; // source creature for explosion styling
     Tile explosion_result = Tile::SPACE; // final tile when explosion ends
 };
 
@@ -108,7 +109,7 @@ private:
 
     void explode_firefly(int x, int y);
     void explode_butterfly(int x, int y);
-    void explode_at(int cx, int cy, Tile fill);
+    void explode_at(int cx, int cy, Tile source, Tile fill);
     void advance_explosions();
 
     void post_tick_amoeba();

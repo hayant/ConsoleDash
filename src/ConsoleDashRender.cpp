@@ -9,6 +9,8 @@ namespace consoledash {
 namespace {
 char firefly_mark(int f){ switch(f){case 0:return '|'; case 1:return '<'; case 2:return '>'; default:return '|';}}
 char butterfly_mark(int f){ switch(f){case 0:return '|'; case 1:return '('; case 2:return ')'; default:return '|';}}
+char firefly_explosion_mark(int stage){ return (stage == 0) ? '+' : (stage == 1 ? 'x' : '*'); }
+char butterfly_explosion_mark(int stage){ return (stage == 0) ? 'o' : (stage == 1 ? 'O' : '@'); }
 }
 
 void ConsoleDash::render() const {
@@ -45,7 +47,15 @@ void ConsoleDash::render() const {
                 case Tile::DIRT: add_colored(C_DIM_YELLOW, "·"); break;
                 case Tile::TITANIUM_WALL: add_colored_char(C_WHITE, '#'); break;
                 case Tile::WALL: add_colored_char(C_BLUE, '%'); break;
-                case Tile::EXPLOSION: { char mark='a'; if(grid_[x][y].explosion_stage==1) mark='b'; else if(grid_[x][y].explosion_stage>=2) mark='c'; add_colored_char(C_BRIGHT_RED, mark); break; }
+                case Tile::EXPLOSION: {
+                    const int stage = (grid_[x][y].explosion_stage >= 2) ? 2 : grid_[x][y].explosion_stage;
+                    if (grid_[x][y].explosion_source == Tile::BUTTERFLY) {
+                        add_colored_char(C_MAGENTA, butterfly_explosion_mark(stage));
+                    } else {
+                        add_colored_char(C_BRIGHT_YELLOW, firefly_explosion_mark(stage));
+                    }
+                    break;
+                }
                 case Tile::ROCK: add_colored_char(C_GRAY, 'O'); break;
                 case Tile::DIAMOND: add_colored_char(C_BRIGHT_CYAN, '*'); break;
                 case Tile::FIREFLY: add_colored_char(C_BRIGHT_YELLOW, firefly_mark(anim_frame_per_three)); break;

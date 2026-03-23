@@ -118,10 +118,10 @@ void ConsoleDash::process_amoeba(int x, int y) {
 void ConsoleDash::process_magic_wall(int x, int y) { (void)x; (void)y; }
 void ConsoleDash::process_rockford(int x, int y) { (void)x; (void)y; try_move_rockford(pending_dx_, pending_dy_); pending_dx_ = 0; pending_dy_ = 0; }
 
-void ConsoleDash::explode_firefly(int x, int y) { explode_at(x, y, Tile::SPACE); }
-void ConsoleDash::explode_butterfly(int x, int y) { explode_at(x, y, Tile::DIAMOND); }
+void ConsoleDash::explode_firefly(int x, int y) { explode_at(x, y, Tile::FIREFLY, Tile::SPACE); }
+void ConsoleDash::explode_butterfly(int x, int y) { explode_at(x, y, Tile::BUTTERFLY, Tile::DIAMOND); }
 
-void ConsoleDash::explode_at(int cx, int cy, Tile fill) {
+void ConsoleDash::explode_at(int cx, int cy, Tile source, Tile fill) {
     for (int dy = -1; dy <= 1; ++dy)
         for (int dx = -1; dx <= 1; ++dx) {
             int x = cx + dx, y = cy + dy;
@@ -130,6 +130,7 @@ void ConsoleDash::explode_at(int cx, int cy, Tile fill) {
             if (grid_[x][y].tile == Tile::ROCKFORD) game_over_ = true;
             set_cell_internal(x, y, Tile::EXPLOSION, 0, false, 0);
             grid_[x][y].explosion_stage = 0;
+            grid_[x][y].explosion_source = source;
             grid_[x][y].explosion_result = fill;
             mark_moved(x, y);
         }
@@ -137,10 +138,15 @@ void ConsoleDash::explode_at(int cx, int cy, Tile fill) {
 
 void ConsoleDash::advance_explosions() {
     for (int x = 0; x < level_width_; ++x)
-        for (int y = 0; y < level_height_; ++y)
-            if (grid_[x][y].tile == Tile::EXPLOSION)
-                if (grid_[x][y].explosion_stage < 2) grid_[x][y].explosion_stage++;
-                else set_cell_internal(x, y, grid_[x][y].explosion_result, 0, false, 0);
+        for (int y = 0; y < level_height_; ++y) {
+            if (grid_[x][y].tile == Tile::EXPLOSION) {
+                if (grid_[x][y].explosion_stage < 2) {
+                    grid_[x][y].explosion_stage++;
+                } else {
+                    set_cell_internal(x, y, grid_[x][y].explosion_result, 0, false, 0);
+                }
+            }
+        }
 }
 
 void ConsoleDash::post_tick_amoeba() {
