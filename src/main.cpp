@@ -98,8 +98,9 @@ static void sample_input(int& dx, int& dy, bool& reach, bool& quit) {
 
 static void build_test_level(consoledash::ConsoleDash& game) {
     using namespace consoledash;
-    const int W = consoledash::WIDTH;
-    const int H = consoledash::HEIGHT;
+    const int W = consoledash::DEFAULT_WIDTH;
+    const int H = consoledash::DEFAULT_HEIGHT;
+    game.set_level_size(W, H);
 
     for (int x = 0; x < W; ++x) {
         game.set_cell(x, 0, Tile::TITANIUM_WALL);
@@ -146,9 +147,28 @@ static bool load_level_from_file(const std::string& path, consoledash::ConsoleDa
         lines.push_back(line);
     }
 
+    int level_height = static_cast<int>(lines.size());
+    int level_width = 0;
+    for (const std::string& ln : lines) {
+        int w = static_cast<int>(ln.size());
+        if (w > level_width) level_width = w;
+    }
+
+    if (level_width <= 0 || level_height <= 0) {
+        return false;
+    }
+    if (level_width > WIDTH || level_height > HEIGHT) {
+        std::cerr << "Error: Level size " << level_width << "x" << level_height
+                  << " exceeds maximum " << WIDTH << "x" << HEIGHT << '\n';
+        return false;
+    }
+    if (!game.set_level_size(level_width, level_height)) {
+        return false;
+    }
+
     bool has_rockford = false;
-    for (int y = 0; y < HEIGHT; ++y) {
-        for (int x = 0; x < WIDTH; ++x) {
+    for (int y = 0; y < level_height; ++y) {
+        for (int x = 0; x < level_width; ++x) {
             char ch = '.';
             if (y < static_cast<int>(lines.size()) && x < static_cast<int>(lines[y].size())) {
                 ch = lines[y][x];

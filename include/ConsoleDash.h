@@ -8,8 +8,10 @@
 
 namespace consoledash {
 
-constexpr int WIDTH = 40;
-constexpr int HEIGHT = 24;
+constexpr int WIDTH = 100;   // maximum supported level width
+constexpr int HEIGHT = 50;   // maximum supported level height
+constexpr int DEFAULT_WIDTH = 40;
+constexpr int DEFAULT_HEIGHT = 24;
 
 enum class Tile : uint8_t {
     SPACE,
@@ -47,6 +49,9 @@ public:
     void set_input(int dx, int dy, bool reach = false);
     void advance_animation();
     void render() const;
+    bool set_level_size(int width, int height);
+    int level_width() const { return level_width_; }
+    int level_height() const { return level_height_; }
 
     int rockford_x() const { return rockford_x_; }
     int rockford_y() const { return rockford_y_; }
@@ -73,6 +78,8 @@ private:
     int diamonds_required_ = 0;
     bool game_over_ = false;
     bool player_wins_ = false;
+    int level_width_ = DEFAULT_WIDTH;
+    int level_height_ = DEFAULT_HEIGHT;
     std::atomic<std::uint64_t> animation_counter_{0};
     mutable std::mutex state_mutex_;
 

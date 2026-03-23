@@ -46,7 +46,36 @@ ConsoleDash::ConsoleDash() {
 }
 
 bool ConsoleDash::in_bounds(int x, int y) const {
-    return x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT;
+    return x >= 0 && x < level_width_ && y >= 0 && y < level_height_;
+}
+
+bool ConsoleDash::set_level_size(int width, int height) {
+    if (width <= 0 || height <= 0 || width > WIDTH || height > HEIGHT) {
+        return false;
+    }
+
+    level_width_ = width;
+    level_height_ = height;
+
+    // Reset whole backing grid/state to a clean slate.
+    for (int x = 0; x < WIDTH; ++x) {
+        for (int y = 0; y < HEIGHT; ++y) {
+            grid_[x][y] = Cell{};
+            moved_[x][y] = false;
+        }
+    }
+
+    rockford_x_ = 0;
+    rockford_y_ = 0;
+    pending_dx_ = 0;
+    pending_dy_ = 0;
+    pending_reach_ = false;
+    diamonds_collected_ = 0;
+    game_over_ = false;
+    player_wins_ = false;
+    amoeba_current_size_ = 0;
+    animation_counter_.store(0, std::memory_order_relaxed);
+    return true;
 }
 
 bool ConsoleDash::is_space(int x, int y) const {
@@ -117,8 +146,8 @@ void ConsoleDash::set_cell(int x, int y, Tile t, uint8_t facing) {
 void ConsoleDash::set_rockford(int x, int y) {
     if (!in_bounds(x, y)) return;
     // Clear previous Rockford position if any
-    for (int ix = 0; ix < WIDTH; ++ix)
-        for (int iy = 0; iy < HEIGHT; ++iy)
+    for (int ix = 0; ix < level_width_; ++ix)
+        for (int iy = 0; iy < level_height_; ++iy)
             if (grid_[ix][iy].tile == Tile::ROCKFORD) {
                 grid_[ix][iy].tile = Tile::SPACE;
                 grid_[ix][iy].facing = 0;
@@ -149,8 +178,8 @@ void ConsoleDash::tick() {
     std::lock_guard<std::mutex> lock(state_mutex_);
     advance_explosions();
 
-    for (int x = 0; x < WIDTH; ++x)
-        for (int y = 0; y < HEIGHT; ++y)
+    for (int x = 0; x < level_width_; ++x)
+        for (int y = 0; y < level_height_; ++y)
             moved_[x][y] = false;
 
     // Apply player input at the beginning of the tick.
@@ -167,16 +196,16 @@ void ConsoleDash::tick() {
     }
 
     // Scan order: top-left to bottom-right
-    for (int y = 0; y < HEIGHT && !game_over_ && !player_wins_; ++y)
-        for (int x = 0; x < WIDTH; ++x)
+    for (int y = 0; y < level_height_ && !game_over_ && !player_wins_; ++y)
+        for (int x = 0; x < level_width_; ++x)
             if (!was_moved(x, y))
                 process_cell(x, y);
 
     post_tick_amoeba();
 
     // Decrement magic wall timers
-    for (int x = 0; x < WIDTH; ++x)
-        for (int y = 0; y < HEIGHT; ++y)
+    for (int x = 0; x < level_width_; ++x)
+        for (int y = 0; y < level_height_; ++y)
             if (grid_[x][y].tile == Tile::MAGIC_WALL && grid_[x][y].magic_timer > 0)
                 grid_[x][y].magic_timer--;
 }
@@ -464,8 +493,8 @@ void ConsoleDash::explode_at(int cx, int cy, Tile fill) {
 }
 
 void ConsoleDash::advance_explosions() {
-    for (int x = 0; x < WIDTH; ++x) {
-        for (int y = 0; y < HEIGHT; ++y) {
+    for (int x = 0; x < level_width_; ++x) {
+        for (int y = 0; y < level_height_; ++y) {
             if (grid_[x][y].tile != Tile::EXPLOSION) continue;
             if (grid_[x][y].explosion_stage < 2) {
                 grid_[x][y].explosion_stage++;
@@ -480,8 +509,8 @@ void ConsoleDash::advance_explosions() {
 void ConsoleDash::post_tick_amoeba() {
     amoeba_current_size_ = 0;
     bool has_growth_option = false;
-    for (int x = 0; x < WIDTH; ++x)
-        for (int y = 0; y < HEIGHT; ++y) {
+    for (int x = 0; x < level_width_; ++x)
+        for (int y = 0; y < level_height_; ++y) {
             if (grid_[x][y].tile != Tile::AMOEBA) continue;
             amoeba_current_size_++;
             for (int d = 0; d < 4; ++d) {
@@ -497,15 +526,15 @@ void ConsoleDash::post_tick_amoeba() {
             }
         }
     if (amoeba_current_size_ >= AMOEBA_MAX_SIZE) {
-        for (int x = 0; x < WIDTH; ++x)
-            for (int y = 0; y < HEIGHT; ++y)
+        for (int x = 0; x < level_width_; ++x)
+            for (int y = 0; y < level_height_; ++y)
                 if (grid_[x][y].tile == Tile::AMOEBA)
                     set_cell_internal(x, y, Tile::ROCK, 0, false, 0);
         return;
     }
     if (!has_growth_option && amoeba_current_size_ > 0) {
-        for (int x = 0; x < WIDTH; ++x)
-            for (int y = 0; y < HEIGHT; ++y)
+        for (int x = 0; x < level_width_; ++x)
+            for (int y = 0; y < level_height_; ++y)
                 if (grid_[x][y].tile == Tile::AMOEBA)
                     set_cell_internal(x, y, Tile::DIAMOND, 0, false, 0);
     }
@@ -658,11 +687,11 @@ void ConsoleDash::render() const {
 #else
     std::system("clear");
 #endif
-    frame.reserve((WIDTH + 1) * HEIGHT * 2); // *2 for occasional multibyte chars
+    frame.reserve((level_width_ + 1) * level_height_ * 8); // include ANSI color sequences
     frame += "\033[H";
 
-    for (int y = 0; y < HEIGHT; ++y) {
-        for (int x = 0; x < WIDTH; ++x) {
+    for (int y = 0; y < level_height_; ++y) {
+        for (int x = 0; x < level_width_; ++x) {
             switch (grid_[x][y].tile) {
                 case Tile::SPACE:
                     frame += ' ';
