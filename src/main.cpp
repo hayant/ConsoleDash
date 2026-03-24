@@ -14,7 +14,8 @@ int main(int argc, char** argv) {
     input_helper.init_input();
 
     consoledash::MainMenu main_menu;
-    if (main_menu.show(input_helper) == consoledash::MainMenuResult::Quit) {
+    const consoledash::MainMenuSelectionResult menu_result = main_menu.show(input_helper);
+    if (menu_result.result == consoledash::MainMenuResult::Quit) {
         input_helper.restore_input();
         return 0;
     }
@@ -22,7 +23,11 @@ int main(int argc, char** argv) {
     consoledash::ConsoleDash game;
     consoledash::LevelParameters level_parameters;
     consoledash::LevelLoader level_loader;
-    level_loader.build_test_level(game);
+    if (!level_loader.load_from_file(menu_result.selected_level_path, game, level_parameters)) {
+        input_helper.restore_input();
+        std::cerr << "Error: Could not open level file: " << menu_result.selected_level_path << '\n';
+        return 1;
+    }
 
     const auto game_tick_interval = std::chrono::milliseconds(level_parameters.GAME_TICK_INTERVAL.value_or(250));
     const auto animation_tick_interval = std::chrono::milliseconds(level_parameters.ANIMATION_TICK_INTERVAL.value_or(200));
