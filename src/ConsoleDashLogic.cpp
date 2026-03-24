@@ -32,16 +32,19 @@ void ConsoleDash::process_rock_or_diamond(int x, int y) {
         return;
     }
     if (below.tile == Tile::MAGIC_WALL) {
-        below.magic_timer = magic_wall_duration_;
-        Tile converted = (tile == Tile::ROCK) ? Tile::DIAMOND : Tile::ROCK;
-        int tx = nx, ty = ny + 1;
-        if (in_bounds(tx, ty) && is_space(tx, ty)) {
-            set_cell_internal(tx, ty, converted, 0, true, 0);
-            clear_cell(x, y);
-            mark_moved(x, y);
-            mark_moved(tx, ty);
+        if (was_falling) {
+            below.magic_timer = magic_wall_duration_;
+            Tile converted = (tile == Tile::ROCK) ? Tile::DIAMOND : Tile::ROCK;
+            int tx = nx, ty = ny + 1;
+            if (in_bounds(tx, ty) && is_space(tx, ty)) {
+                set_cell_internal(tx, ty, converted, 0, true, 0);
+                clear_cell(x, y);
+                mark_moved(x, y);
+                mark_moved(tx, ty);
+            }
+        } else {
+            grid_[x][y].was_falling = false;
         }
-        grid_[x][y].was_falling = false;
         return;
     }
     if (!can_roll_over(nx, ny)) { grid_[x][y].was_falling = false; return; }
