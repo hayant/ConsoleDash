@@ -95,44 +95,6 @@ static void sample_input(int& dx, int& dy, bool& reach, bool& quit) {
     }
 }
 
-static void build_test_level(consoledash::ConsoleDash& game) {
-    using namespace consoledash;
-    const int W = consoledash::DEFAULT_WIDTH;
-    const int H = consoledash::DEFAULT_HEIGHT;
-    game.set_level_size(W, H);
-
-    for (int x = 0; x < W; ++x) {
-        game.set_cell(x, 0, Tile::TITANIUM_WALL);
-        game.set_cell(x, H - 1, Tile::TITANIUM_WALL);
-    }
-    for (int y = 0; y < H; ++y) {
-        game.set_cell(0, y, Tile::TITANIUM_WALL);
-        game.set_cell(W - 1, y, Tile::TITANIUM_WALL);
-    }
-
-    for (int y = 1; y < H - 1; ++y)
-        for (int x = 1; x < W - 1; ++x)
-            game.set_cell(x, y, Tile::DIRT);
-
-    game.set_cell(2, 2, Tile::SPACE);
-    game.set_rockford(2, 2);
-
-    game.set_cell(10, 5, Tile::ROCK);
-    game.set_cell(12, 5, Tile::ROCK);
-    game.set_cell(14, 8, Tile::DIAMOND);
-    game.set_cell(16, 8, Tile::DIAMOND);
-    game.set_cell(18, 8, Tile::DIAMOND);
-
-    game.set_cell(25, 6, Tile::FIREFLY, static_cast<uint8_t>(consoledash::Direction::LEFT));
-    game.set_cell(24, 10, Tile::BUTTERFLY, static_cast<uint8_t>(consoledash::Direction::UP));
-
-    game.set_cell(20, 12, Tile::AMOEBA);
-    game.set_cell(22, 14, Tile::MAGIC_WALL);
-
-    game.set_cell(W - 3, H - 3, Tile::EXIT);
-    game.set_diamonds_required(3);
-}
-
 int main(int argc, char** argv) {
     init_input();
 
@@ -147,7 +109,7 @@ int main(int argc, char** argv) {
             return 1;
         }
     } else {
-        build_test_level(game);
+        level_loader.build_test_level(game);
     }
 
     const auto game_tick_interval = std::chrono::milliseconds(level_parameters.GAME_TICK_INTERVAL.value_or(250));

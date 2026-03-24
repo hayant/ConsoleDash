@@ -19,6 +19,7 @@ struct LevelParameters {
 class LevelLoader {
 public:
     bool load_from_file(const std::string& path, ConsoleDash& game, LevelParameters& parameters) const;
+    void build_test_level(ConsoleDash& game) const;
 };
 
 } // namespace consoledash
