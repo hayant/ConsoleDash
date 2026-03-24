@@ -57,6 +57,7 @@ void parse_level_parameters(const std::vector<std::string>& parameter_lines, Lev
         if (!parsed_value.has_value()) continue;
 
         if (key == "TIME") parameters.TIME = *parsed_value;
+        else if (key == "DIAMONDS_REQUIRED") parameters.DIAMONDS_REQUIRED = *parsed_value;
         else if (key == "AMOEBA_MAX_SIZE") parameters.AMOEBA_MAX_SIZE = *parsed_value;
         else if (key == "AMOEBA_GROWTH_FACTOR") parameters.AMOEBA_GROWTH_FACTOR = *parsed_value;
         else if (key == "MAGIC_WALL_DURATION") parameters.MAGIC_WALL_DURATION = *parsed_value;
@@ -79,15 +80,17 @@ bool LevelLoader::load_from_file(const std::string& path, ConsoleDash& game, Lev
         lines.push_back(line);
     }
 
+    int map_end = static_cast<int>(lines.size());
     int parameters_start = static_cast<int>(lines.size());
     for (int i = 0; i < static_cast<int>(lines.size()); ++i) {
         if (trim_copy(lines[i]).empty()) {
+            map_end = i;
             parameters_start = i + 1;
             break;
         }
     }
 
-    std::vector<std::string> map_lines(lines.begin(), lines.begin() + std::min(parameters_start, static_cast<int>(lines.size())));
+    std::vector<std::string> map_lines(lines.begin(), lines.begin() + std::min(map_end, static_cast<int>(lines.size())));
     std::vector<std::string> parameter_lines;
     if (parameters_start < static_cast<int>(lines.size())) {
         parameter_lines.assign(lines.begin() + parameters_start, lines.end());
@@ -170,7 +173,7 @@ bool LevelLoader::load_from_file(const std::string& path, ConsoleDash& game, Lev
     if (!has_rockford) {
         game.set_rockford(1, 1);
     }
-    game.set_diamonds_required(3);
+    game.set_diamonds_required(parameters.DIAMONDS_REQUIRED.value_or(3));
     if (parameters.TIME.has_value()) game.set_time_limit(*parameters.TIME);
     if (parameters.AMOEBA_MAX_SIZE.has_value()) game.set_amoeba_max_size(*parameters.AMOEBA_MAX_SIZE);
     if (parameters.AMOEBA_GROWTH_FACTOR.has_value()) game.set_amoeba_growth_factor(*parameters.AMOEBA_GROWTH_FACTOR);
