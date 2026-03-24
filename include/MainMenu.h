@@ -28,11 +28,12 @@ private:
     static void clear_terminal();
     static void render_main_menu(Selection selection);
     static void render_help_screen();
-    static void render_level_select(const std::vector<LevelEntry>& levels, int selected_index);
+    static void render_level_select(const std::vector<LevelEntry>& levels, int selected_index, const std::string& levels_path);
     static Selection next_selection(Selection selection);
     static Selection previous_selection(Selection selection);
-    static std::vector<LevelEntry> discover_levels();
+    static std::vector<LevelEntry> discover_levels(const std::string& levels_path);
     static std::string extract_level_name(const std::string& path);
+    static std::string prompt_levels_path(InputHelper& input_helper, const std::string& current_path);
     static bool show_level_select(InputHelper& input_helper, std::string& selected_level_path);
 };
 

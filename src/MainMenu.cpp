@@ -81,7 +81,7 @@ void MainMenu::render_help_screen() {
         << "########################################\n";
 }
 
-void MainMenu::render_level_select(const std::vector<LevelEntry>& levels, int selected_index) {
+void MainMenu::render_level_select(const std::vector<LevelEntry>& levels, int selected_index, const std::string& levels_path) {
     clear_terminal();
     constexpr int width = 40;
     constexpr int height = 24;
@@ -103,18 +103,20 @@ void MainMenu::render_level_select(const std::vector<LevelEntry>& levels, int se
     };
 
     set_line(1, "            SELECT LEVEL");
-    set_line(2, "");
+    const char path_mark = (selected_index == 0) ? '>' : ' ';
+    set_line(2, std::string(1, path_mark) + " Path: " + levels_path);
+    set_line(3, "");
 
-    const int list_start = 3;
+    const int list_start = 4;
     const int list_end = 20;
     int row = list_start;
     for (size_t i = 0; i < levels.size() && row <= list_end; ++i, ++row) {
-        const char mark = (static_cast<int>(i) == selected_index) ? '>' : ' ';
+        const char mark = (static_cast<int>(i) + 1 == selected_index) ? '>' : ' ';
         set_line(row, std::string(1, mark) + " " + levels[i].display_label);
     }
 
     if (levels.empty()) {
-        set_line(10, "No level files found in levels/");
+        set_line(10, "No level files found.");
     }
     set_line(22, "      [W/S] Move  [Enter] Select");
 
@@ -174,9 +176,9 @@ std::string MainMenu::extract_level_name(const std::string& path) {
     return "";
 }
 
-std::vector<MainMenu::LevelEntry> MainMenu::discover_levels() {
+std::vector<MainMenu::LevelEntry> MainMenu::discover_levels(const std::string& levels_path) {
     std::vector<LevelEntry> levels;
-    const std::filesystem::path levels_dir("../levels");
+    const std::filesystem::path levels_dir(levels_path);
     if (!std::filesystem::exists(levels_dir) || !std::filesystem::is_directory(levels_dir)) {
         return levels;
     }
@@ -199,10 +201,52 @@ std::vector<MainMenu::LevelEntry> MainMenu::discover_levels() {
     return levels;
 }
 
+std::string MainMenu::prompt_levels_path(InputHelper& input_helper, const std::string& current_path) {
+    std::string path = current_path;
+    while (true) {
+        clear_terminal();
+        std::cout
+            << "########################################\n"
+            << "#            SELECT LEVEL              #\n"
+            << "#                                      #\n"
+            << "# Enter levels path and press [Enter]  #\n"
+            << "# Press [Q] to cancel                  #\n"
+            << "#                                      #\n";
+
+        std::string shown = "Path: " + path;
+        if (shown.size() > 38) {
+            shown = shown.substr(shown.size() - 38);
+        }
+        std::cout << "#" << shown << std::string(38 - shown.size(), ' ') << "#\n";
+        std::cout << "#                                      #\n"
+                  << "########################################\n";
+
+        const int key = input_helper.poll_key_nonblock();
+        if (key == 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(16));
+            continue;
+        }
+        if (key == 'q' || key == 'Q') {
+            return current_path;
+        }
+        if (key == '\n' || key == '\r') {
+            return path.empty() ? current_path : path;
+        }
+        if (key == 127 || key == 8) {
+            if (!path.empty()) path.pop_back();
+            continue;
+        }
+        if (key >= 32 && key <= 126) {
+            path.push_back(static_cast<char>(key));
+        }
+    }
+}
+
 bool MainMenu::show_level_select(InputHelper& input_helper, std::string& selected_level_path) {
-    std::vector<LevelEntry> levels = discover_levels();
-    int selected_index = 0;
-    render_level_select(levels, selected_index);
+    std::string levels_path = "levels";
+    std::vector<LevelEntry> levels = discover_levels(levels_path);
+    int selected_index = 0; // 0 = path line, 1..N = level rows
+    render_level_select(levels, selected_index, levels_path);
     while (true) {
         const int key = input_helper.poll_key_nonblock();
         if (key == 0) {
@@ -212,19 +256,29 @@ bool MainMenu::show_level_select(InputHelper& input_helper, std::string& selecte
         if (key == 'q' || key == 'Q') {
             return false;
         }
-        if (!levels.empty() && (key == 'w' || key == 'W')) {
-            selected_index = (selected_index - 1 + static_cast<int>(levels.size())) % static_cast<int>(levels.size());
-            render_level_select(levels, selected_index);
+        const int item_count = static_cast<int>(levels.size()) + 1;
+        if (key == 'w' || key == 'W') {
+            selected_index = (selected_index - 1 + item_count) % item_count;
+            render_level_select(levels, selected_index, levels_path);
             continue;
         }
-        if (!levels.empty() && (key == 's' || key == 'S')) {
-            selected_index = (selected_index + 1) % static_cast<int>(levels.size());
-            render_level_select(levels, selected_index);
+        if (key == 's' || key == 'S') {
+            selected_index = (selected_index + 1) % item_count;
+            render_level_select(levels, selected_index, levels_path);
             continue;
         }
         if (key == '\n' || key == '\r') {
-            if (levels.empty()) return false;
-            selected_level_path = levels[selected_index].path;
+            if (selected_index == 0) {
+                levels_path = prompt_levels_path(input_helper, levels_path);
+                levels = discover_levels(levels_path);
+                selected_index = 0;
+                render_level_select(levels, selected_index, levels_path);
+                continue;
+            }
+            if (levels.empty()) {
+                continue;
+            }
+            selected_level_path = levels[static_cast<size_t>(selected_index - 1)].path;
             return true;
         }
     }
