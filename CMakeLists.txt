@@ -9,6 +9,7 @@ add_library(ConsoleDashLib
     src/ConsoleDash.cpp
     src/ConsoleDashLogic.cpp
     src/ConsoleDashRender.cpp
+    src/InputHelper.cpp
     src/LevelLoader.cpp
 )
 
