@@ -11,6 +11,7 @@ add_library(ConsoleDashLib
     src/ConsoleDashRender.cpp
     src/InputHelper.cpp
     src/LevelLoader.cpp
+    src/MainMenu.cpp
 )
 
 target_include_directories(ConsoleDashLib

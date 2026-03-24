@@ -9,6 +9,7 @@ class InputHelper {
 public:
     void init_input();
     void restore_input();
+    int poll_key_nonblock();
     void sample_input(int& dx, int& dy, bool& reach, bool& quit);
 
 private:

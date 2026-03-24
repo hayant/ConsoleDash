@@ -1,29 +1,28 @@
 #include "ConsoleDash.h"
 #include "InputHelper.h"
 #include "LevelLoader.h"
+#include "MainMenu.h"
 #include <iostream>
 #include <chrono>
 #include <thread>
 #include <atomic>
-#include <string>
 
 int main(int argc, char** argv) {
+    (void)argc;
+    (void)argv;
     consoledash::InputHelper input_helper;
     input_helper.init_input();
+
+    consoledash::MainMenu main_menu;
+    if (main_menu.show(input_helper) == consoledash::MainMenuResult::Quit) {
+        input_helper.restore_input();
+        return 0;
+    }
 
     consoledash::ConsoleDash game;
     consoledash::LevelParameters level_parameters;
     consoledash::LevelLoader level_loader;
-    if (argc >= 2) {
-        const std::string level_path = argv[1];
-        if (!level_loader.load_from_file(level_path, game, level_parameters)) {
-            input_helper.restore_input();
-            std::cerr << "Error: Could not open level file: " << level_path << '\n';
-            return 1;
-        }
-    } else {
-        level_loader.build_test_level(game);
-    }
+    level_loader.build_test_level(game);
 
     const auto game_tick_interval = std::chrono::milliseconds(level_parameters.GAME_TICK_INTERVAL.value_or(250));
     const auto animation_tick_interval = std::chrono::milliseconds(level_parameters.ANIMATION_TICK_INTERVAL.value_or(200));

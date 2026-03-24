@@ -59,6 +59,10 @@ int InputHelper::get_key_nonblock() {
 #endif
 }
 
+int InputHelper::poll_key_nonblock() {
+    return get_key_nonblock();
+}
+
 void InputHelper::sample_input(int& dx, int& dy, bool& reach, bool& quit) {
     dx = 0;
     dy = 0;
