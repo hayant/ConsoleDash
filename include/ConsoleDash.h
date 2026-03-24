@@ -68,6 +68,7 @@ public:
     void set_diamonds_required(int n) { diamonds_required_ = n; }
     void set_time_limit(int seconds);
     void set_amoeba_max_size(int max_size);
+    void set_amoeba_growth_factor(int growth_factor);
     void set_magic_wall_duration(int duration_ticks);
     void set_cell(int x, int y, Tile t, uint8_t facing = 0);
     void set_rockford(int x, int y);
@@ -95,6 +96,7 @@ private:
 
     int amoeba_current_size_ = 0;
     int amoeba_max_size_ = 150;
+    int amoeba_growth_factor_ = 75;
     int magic_wall_duration_ = 200;
 
     bool in_bounds(int x, int y) const;

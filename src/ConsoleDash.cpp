@@ -53,12 +53,23 @@ void ConsoleDash::set_time_limit(int seconds) {
 }
 
 void ConsoleDash::set_amoeba_max_size(int max_size) {
-    if (max_size <= 0) return;
+    if (max_size <= 0) {
+        return;
+    }
     amoeba_max_size_ = max_size;
 }
 
+void ConsoleDash::set_amoeba_growth_factor(int growth_factor) {
+    if (growth_factor <= 0) {
+        return;
+    }
+    amoeba_growth_factor_ = growth_factor;
+}
+
 void ConsoleDash::set_magic_wall_duration(int duration_ticks) {
-    if (duration_ticks <= 0) return;
+    if (duration_ticks <= 0) {
+        return;
+    }
     magic_wall_duration_ = duration_ticks;
 }
 

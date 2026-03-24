@@ -99,7 +99,7 @@ void ConsoleDash::process_butterfly(int x, int y) {
 
 void ConsoleDash::process_amoeba(int x, int y) {
     static std::mt19937 growth_rng(std::random_device{}());
-    const int growth_upper = std::max(0, amoeba_max_size_ / 2 - amoeba_current_size_ / 2);
+    const int growth_upper = std::max(0, amoeba_growth_factor_ - (amoeba_current_size_ / amoeba_max_size_ * amoeba_growth_factor_));
     int rand_number = std::uniform_int_distribution<int>(0, growth_upper)(growth_rng);
     if (rand_number != 0) return;
     int order[4] = {0, 1, 2, 3};

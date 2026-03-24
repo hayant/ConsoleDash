@@ -11,6 +11,7 @@ struct LevelParameters {
     std::string NAME;
     std::optional<int> TIME;
     std::optional<int> AMOEBA_MAX_SIZE;
+    std::optional<int> AMOEBA_GROWTH_FACTOR;
     std::optional<int> MAGIC_WALL_DURATION;
     std::optional<int> GAME_TICK_INTERVAL;
     std::optional<int> ANIMATION_TICK_INTERVAL;

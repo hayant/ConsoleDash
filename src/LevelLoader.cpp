@@ -58,6 +58,7 @@ void parse_level_parameters(const std::vector<std::string>& parameter_lines, Lev
 
         if (key == "TIME") parameters.TIME = *parsed_value;
         else if (key == "AMOEBA_MAX_SIZE") parameters.AMOEBA_MAX_SIZE = *parsed_value;
+        else if (key == "AMOEBA_GROWTH_FACTOR") parameters.AMOEBA_GROWTH_FACTOR = *parsed_value;
         else if (key == "MAGIC_WALL_DURATION") parameters.MAGIC_WALL_DURATION = *parsed_value;
         else if (key == "GAME_TICK_INTERVAL") parameters.GAME_TICK_INTERVAL = *parsed_value;
         else if (key == "ANIMATION_TICK_INTERVAL") parameters.ANIMATION_TICK_INTERVAL = *parsed_value;
@@ -172,6 +173,7 @@ bool LevelLoader::load_from_file(const std::string& path, ConsoleDash& game, Lev
     game.set_diamonds_required(3);
     if (parameters.TIME.has_value()) game.set_time_limit(*parameters.TIME);
     if (parameters.AMOEBA_MAX_SIZE.has_value()) game.set_amoeba_max_size(*parameters.AMOEBA_MAX_SIZE);
+    if (parameters.AMOEBA_GROWTH_FACTOR.has_value()) game.set_amoeba_growth_factor(*parameters.AMOEBA_GROWTH_FACTOR);
     if (parameters.MAGIC_WALL_DURATION.has_value()) game.set_magic_wall_duration(*parameters.MAGIC_WALL_DURATION);
     return true;
 }
