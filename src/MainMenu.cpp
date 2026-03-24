@@ -84,8 +84,12 @@ void MainMenu::render_help_screen() {
 void MainMenu::render_level_select(const std::vector<LevelEntry>& levels, int selected_index, const std::string& levels_path) {
     clear_terminal();
     constexpr int width = 40;
-    constexpr int height = 24;
     constexpr int inner_width = width - 2;
+    const int list_rows = std::max(1, static_cast<int>(levels.size()));
+    const int header_rows = 5; // title, path, spacer
+    const int footer_rows = 1; // controls line
+    const int border_rows = 2; // top and bottom
+    const int height = border_rows + header_rows + list_rows + footer_rows;
 
     std::vector<std::string> lines(height, std::string(inner_width, ' '));
     lines[0] = std::string(inner_width, '#');
@@ -103,22 +107,24 @@ void MainMenu::render_level_select(const std::vector<LevelEntry>& levels, int se
     };
 
     set_line(1, "            SELECT LEVEL");
+    set_line(2, "");
     const char path_mark = (selected_index == 0) ? '>' : ' ';
-    set_line(2, std::string(1, path_mark) + " Path: " + levels_path);
-    set_line(3, "");
+    set_line(3, "  " +std::string(1, path_mark) + " Path: " + levels_path);
+    set_line(4, "");
 
-    const int list_start = 4;
-    const int list_end = 20;
+    const int list_start = 5;
+    const int list_end = list_start + list_rows - 1;
     int row = list_start;
     for (size_t i = 0; i < levels.size() && row <= list_end; ++i, ++row) {
         const char mark = (static_cast<int>(i) + 1 == selected_index) ? '>' : ' ';
-        set_line(row, std::string(1, mark) + " " + levels[i].display_label);
+        set_line(row, "  " + std::string(1, mark) + " " + levels[i].display_label);
     }
 
     if (levels.empty()) {
-        set_line(10, "No level files found.");
+        set_line(list_start, "  No level files found.");
     }
-    set_line(22, "      [W/S] Move  [Enter] Select");
+    set_line(height - 3, "");
+    set_line(height - 2, "      [W/S] Move  [Enter] Select");
 
     for (const std::string& line : lines) {
         std::cout << line << '\n';
@@ -243,7 +249,7 @@ std::string MainMenu::prompt_levels_path(InputHelper& input_helper, const std::s
 }
 
 bool MainMenu::show_level_select(InputHelper& input_helper, std::string& selected_level_path) {
-    std::string levels_path = "levels";
+    std::string levels_path = "../levels";
     std::vector<LevelEntry> levels = discover_levels(levels_path);
     int selected_index = 0; // 0 = path line, 1..N = level rows
     render_level_select(levels, selected_index, levels_path);
