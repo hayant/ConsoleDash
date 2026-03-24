@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <atomic>
+#include <chrono>
 #include <mutex>
 
 namespace consoledash {
@@ -58,11 +59,16 @@ public:
     int rockford_y() const { return rockford_y_; }
     int diamonds_collected() const { return diamonds_collected_; }
     int diamonds_required() const { return diamonds_required_; }
+    int time_remaining() const { return time_remaining_; }
+    int time_limit() const { return time_limit_; }
     bool game_over() const { return game_over_; }
     bool player_wins() const { return player_wins_; }
     bool is_alive() const { return !game_over_ && !player_wins_; }
 
     void set_diamonds_required(int n) { diamonds_required_ = n; }
+    void set_time_limit(int seconds);
+    void set_amoeba_max_size(int max_size);
+    void set_magic_wall_duration(int duration_ticks);
     void set_cell(int x, int y, Tile t, uint8_t facing = 0);
     void set_rockford(int x, int y);
     void set_exit(int x, int y);
@@ -77,6 +83,9 @@ private:
     bool pending_reach_ = false;
     int diamonds_collected_ = 0;
     int diamonds_required_ = 0;
+    int time_limit_ = 255;
+    int time_remaining_ = 255;
+    std::chrono::steady_clock::time_point last_time_update_ = std::chrono::steady_clock::now();
     bool game_over_ = false;
     bool player_wins_ = false;
     int level_width_ = DEFAULT_WIDTH;
@@ -85,8 +94,8 @@ private:
     mutable std::mutex state_mutex_;
 
     int amoeba_current_size_ = 0;
-    static constexpr int AMOEBA_MAX_SIZE = 150;
-    static constexpr int MAGIC_WALL_DURATION = 200;
+    int amoeba_max_size_ = 150;
+    int magic_wall_duration_ = 200;
 
     bool in_bounds(int x, int y) const;
     bool is_space(int x, int y) const; // moving objects can only enter empty space

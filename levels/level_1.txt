@@ -22,3 +22,10 @@
 #....................................E.#
 #......................................#
 ########################################
+
+NAME: "First"
+TIME: 200
+AMOEBA_MAX_SIZE: 10
+MAGIC_WALL_DURATION: 50
+GAME_TICK_INTERVAL: 250
+ANIMATION_TICK_INTERVAL: 200

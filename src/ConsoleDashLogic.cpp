@@ -32,7 +32,7 @@ void ConsoleDash::process_rock_or_diamond(int x, int y) {
         return;
     }
     if (below.tile == Tile::MAGIC_WALL) {
-        below.magic_timer = MAGIC_WALL_DURATION;
+        below.magic_timer = magic_wall_duration_;
         Tile converted = (tile == Tile::ROCK) ? Tile::DIAMOND : Tile::ROCK;
         int tx = nx, ty = ny + 1;
         if (in_bounds(tx, ty) && is_space(tx, ty)) {
@@ -99,7 +99,8 @@ void ConsoleDash::process_butterfly(int x, int y) {
 
 void ConsoleDash::process_amoeba(int x, int y) {
     static std::mt19937 growth_rng(std::random_device{}());
-    int rand_number = std::uniform_int_distribution<int>(0, AMOEBA_MAX_SIZE / 2 - amoeba_current_size_ / 2)(growth_rng);
+    const int growth_upper = std::max(0, amoeba_max_size_ / 2 - amoeba_current_size_ / 2);
+    int rand_number = std::uniform_int_distribution<int>(0, growth_upper)(growth_rng);
     if (rand_number != 0) return;
     int order[4] = {0, 1, 2, 3};
     static std::mt19937 rng(std::random_device{}());
@@ -167,7 +168,7 @@ void ConsoleDash::post_tick_amoeba() {
                     if (in_bounds(nx, ny) && (grid_[nx][ny].tile == Tile::SPACE || grid_[nx][ny].tile == Tile::DIRT)) has_growth_option = true;
                 }
             }
-    if (amoeba_current_size_ >= AMOEBA_MAX_SIZE) {
+    if (amoeba_current_size_ >= amoeba_max_size_) {
         for (int x = 0; x < level_width_; ++x)
             for (int y = 0; y < level_height_; ++y)
                 if (grid_[x][y].tile == Tile::AMOEBA) set_cell_internal(x, y, Tile::ROCK, 0, false, 0);

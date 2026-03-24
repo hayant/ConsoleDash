@@ -78,6 +78,8 @@ void ConsoleDash::render() const {
     frame += std::to_string(diamonds_collected_);
     frame += '/';
     frame += std::to_string(diamonds_required_);
+    frame += "  Time: ";
+    frame += std::to_string(time_remaining_);
     frame += "  [WASD] Move  [Q] Quit";
 
     fwrite(frame.data(), 1, frame.size(), stdout);

@@ -8,6 +8,7 @@ ConsoleDash::ConsoleDash() {
             grid_[x][y] = Cell{};
             moved_[x][y] = false;
         }
+    last_time_update_ = std::chrono::steady_clock::now();
 }
 
 bool ConsoleDash::in_bounds(int x, int y) const {
@@ -35,11 +36,30 @@ bool ConsoleDash::set_level_size(int width, int height) {
     pending_dy_ = 0;
     pending_reach_ = false;
     diamonds_collected_ = 0;
+    time_remaining_ = time_limit_;
+    last_time_update_ = std::chrono::steady_clock::now();
     game_over_ = false;
     player_wins_ = false;
     amoeba_current_size_ = 0;
     animation_counter_.store(0, std::memory_order_relaxed);
     return true;
+}
+
+void ConsoleDash::set_time_limit(int seconds) {
+    if (seconds <= 0) return;
+    time_limit_ = seconds;
+    time_remaining_ = seconds;
+    last_time_update_ = std::chrono::steady_clock::now();
+}
+
+void ConsoleDash::set_amoeba_max_size(int max_size) {
+    if (max_size <= 0) return;
+    amoeba_max_size_ = max_size;
+}
+
+void ConsoleDash::set_magic_wall_duration(int duration_ticks) {
+    if (duration_ticks <= 0) return;
+    magic_wall_duration_ = duration_ticks;
 }
 
 bool ConsoleDash::is_space(int x, int y) const {
@@ -139,6 +159,20 @@ void ConsoleDash::advance_animation() {
 
 void ConsoleDash::tick() {
     std::lock_guard<std::mutex> lock(state_mutex_);
+    if (!game_over_ && !player_wins_) {
+        const auto now = std::chrono::steady_clock::now();
+        const auto elapsed_seconds =
+            std::chrono::duration_cast<std::chrono::seconds>(now - last_time_update_).count();
+        if (elapsed_seconds > 0) {
+            if (elapsed_seconds >= time_remaining_) {
+                time_remaining_ = 0;
+                game_over_ = true;
+            } else {
+                time_remaining_ -= static_cast<int>(elapsed_seconds);
+            }
+            last_time_update_ += std::chrono::seconds(elapsed_seconds);
+        }
+    }
     advance_explosions();
 
     for (int x = 0; x < level_width_; ++x)
