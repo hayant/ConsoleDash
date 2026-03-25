@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <sys/select.h>
 #endif
+#include <thread>
 
 namespace consoledash {
 
@@ -61,6 +62,11 @@ int InputHelper::get_key_nonblock() {
 
 int InputHelper::poll_key_nonblock() {
     return get_key_nonblock();
+}
+
+void InputHelper::wait_for_key() {
+    while (get_key_nonblock() == 0)
+        std::this_thread::sleep_for(std::chrono::milliseconds(16));
 }
 
 void InputHelper::sample_input(int& dx, int& dy, bool& reach, bool& quit) {

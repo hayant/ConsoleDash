@@ -81,9 +81,10 @@ void MainMenu::render_help_screen() {
         << "########################################\n";
 }
 
-void MainMenu::render_level_select(const std::vector<LevelEntry>& levels, int selected_index, const std::string& levels_path) {
+void MainMenu::render_level_select(const std::vector<LevelEntry>& levels, int selected_index, const std::string& levels_path, int scroll_offset) {
     clear_terminal();
     constexpr int inner_width = 38;
+    constexpr int max_visible = 20;
 
     auto make_border = []() { return std::string(inner_width, '#'); };
     auto make_row = [](const std::string& content) {
@@ -106,10 +107,17 @@ void MainMenu::render_level_select(const std::vector<LevelEntry>& levels, int se
     if (levels.empty()) {
         lines.push_back(make_row("  No level files found."));
     } else {
-        for (size_t i = 0; i < levels.size(); ++i) {
-            const char mark = (static_cast<int>(i) + 1 == selected_index) ? '>' : ' ';
-            lines.push_back(make_row("  " + std::string(1, mark) + " " + levels[i].display_label));
+        const int total = static_cast<int>(levels.size());
+        const int visible_count = std::min(max_visible, total - scroll_offset);
+        if (scroll_offset > 0)
+            lines.push_back(make_row("  ^ ..."));
+        for (int i = 0; i < visible_count; ++i) {
+            const int level_idx = scroll_offset + i;
+            const char mark = (level_idx + 1 == selected_index) ? '>' : ' ';
+            lines.push_back(make_row("  " + std::string(1, mark) + " " + levels[level_idx].display_label));
         }
+        if (scroll_offset + visible_count < total)
+            lines.push_back(make_row("  v ..."));
     }
 
     lines.push_back(make_row(""));
@@ -239,10 +247,22 @@ std::string MainMenu::prompt_levels_path(InputHelper& input_helper, const std::s
 }
 
 bool MainMenu::show_level_select(InputHelper& input_helper, std::string& selected_level_path) {
+    constexpr int max_visible = 20;
     std::string levels_path = "../levels";
     std::vector<LevelEntry> levels = discover_levels(levels_path);
     int selected_index = 0; // 0 = path line, 1..N = level rows
-    render_level_select(levels, selected_index, levels_path);
+    int scroll_offset = 0;
+
+    auto update_scroll = [&]() {
+        if (selected_index == 0) return;
+        const int level_idx = selected_index - 1;
+        if (level_idx < scroll_offset)
+            scroll_offset = level_idx;
+        else if (level_idx >= scroll_offset + max_visible)
+            scroll_offset = level_idx - max_visible + 1;
+    };
+
+    render_level_select(levels, selected_index, levels_path, scroll_offset);
     while (true) {
         const int key = input_helper.poll_key_nonblock();
         if (key == 0) {
@@ -255,12 +275,14 @@ bool MainMenu::show_level_select(InputHelper& input_helper, std::string& selecte
         const int item_count = static_cast<int>(levels.size()) + 1;
         if (key == 'w' || key == 'W') {
             selected_index = (selected_index - 1 + item_count) % item_count;
-            render_level_select(levels, selected_index, levels_path);
+            update_scroll();
+            render_level_select(levels, selected_index, levels_path, scroll_offset);
             continue;
         }
         if (key == 's' || key == 'S') {
             selected_index = (selected_index + 1) % item_count;
-            render_level_select(levels, selected_index, levels_path);
+            update_scroll();
+            render_level_select(levels, selected_index, levels_path, scroll_offset);
             continue;
         }
         if (key == '\n' || key == '\r') {
@@ -268,7 +290,8 @@ bool MainMenu::show_level_select(InputHelper& input_helper, std::string& selecte
                 levels_path = prompt_levels_path(input_helper, levels_path);
                 levels = discover_levels(levels_path);
                 selected_index = 0;
-                render_level_select(levels, selected_index, levels_path);
+                scroll_offset = 0;
+                render_level_select(levels, selected_index, levels_path, scroll_offset);
                 continue;
             }
             if (levels.empty()) {

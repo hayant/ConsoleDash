@@ -11,6 +11,7 @@ public:
     void restore_input();
     int poll_key_nonblock();
     void sample_input(int& dx, int& dy, bool& reach, bool& quit);
+    void wait_for_key();
 
 private:
     int get_key_nonblock();
