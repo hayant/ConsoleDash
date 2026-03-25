@@ -83,48 +83,38 @@ void MainMenu::render_help_screen() {
 
 void MainMenu::render_level_select(const std::vector<LevelEntry>& levels, int selected_index, const std::string& levels_path) {
     clear_terminal();
-    constexpr int width = 40;
-    constexpr int inner_width = width - 2;
-    const int list_rows = std::max(1, static_cast<int>(levels.size()));
-    const int header_rows = 5; // title, path, spacer
-    const int footer_rows = 1; // controls line
-    const int border_rows = 2; // top and bottom
-    const int height = border_rows + header_rows + list_rows + footer_rows;
+    constexpr int inner_width = 38;
 
-    std::vector<std::string> lines(height, std::string(inner_width, ' '));
-    lines[0] = std::string(inner_width, '#');
-    lines[height - 1] = std::string(inner_width, '#');
-
-    auto set_line = [&](int row, const std::string& content) {
-        if (row <= 0 || row >= height - 1) return;
+    auto make_border = []() { return std::string(inner_width, '#'); };
+    auto make_row = [](const std::string& content) {
         std::string line(inner_width, ' ');
         line[0] = '#';
         line[inner_width - 1] = '#';
-        const int max_content = inner_width - 2;
-        std::string clipped = content.substr(0, static_cast<size_t>(max_content));
+        const std::string clipped = content.substr(0, inner_width - 2);
         for (size_t i = 0; i < clipped.size(); ++i) line[i + 1] = clipped[i];
-        lines[row] = line;
+        return line;
     };
 
-    set_line(1, "            SELECT LEVEL");
-    set_line(2, "");
+    std::vector<std::string> lines;
+    lines.push_back(make_border());
+    lines.push_back(make_row("            SELECT LEVEL"));
+    lines.push_back(make_row(""));
     const char path_mark = (selected_index == 0) ? '>' : ' ';
-    set_line(3, "  " +std::string(1, path_mark) + " Path: " + levels_path);
-    set_line(4, "");
-
-    const int list_start = 5;
-    const int list_end = list_start + list_rows - 1;
-    int row = list_start;
-    for (size_t i = 0; i < levels.size() && row <= list_end; ++i, ++row) {
-        const char mark = (static_cast<int>(i) + 1 == selected_index) ? '>' : ' ';
-        set_line(row, "  " + std::string(1, mark) + " " + levels[i].display_label);
-    }
+    lines.push_back(make_row("  " + std::string(1, path_mark) + " Path: " + levels_path));
+    lines.push_back(make_row(""));
 
     if (levels.empty()) {
-        set_line(list_start, "  No level files found.");
+        lines.push_back(make_row("  No level files found."));
+    } else {
+        for (size_t i = 0; i < levels.size(); ++i) {
+            const char mark = (static_cast<int>(i) + 1 == selected_index) ? '>' : ' ';
+            lines.push_back(make_row("  " + std::string(1, mark) + " " + levels[i].display_label));
+        }
     }
-    set_line(height - 3, "");
-    set_line(height - 2, "      [W/S] Move  [Enter] Select");
+
+    lines.push_back(make_row(""));
+    lines.push_back(make_row("      [W/S] Move  [Enter] Select"));
+    lines.push_back(make_border());
 
     for (const std::string& line : lines) {
         std::cout << line << '\n';
