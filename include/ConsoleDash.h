@@ -117,7 +117,7 @@ private:
     void process_firefly(int x, int y);
     void process_butterfly(int x, int y);
     void process_amoeba(int x, int y);
-    void process_magic_wall(int x, int y);
+    static void process_magic_wall(int x, int y);
     void process_rockford(int x, int y);
 
     void explode_firefly(int x, int y);

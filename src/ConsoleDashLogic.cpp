@@ -59,7 +59,7 @@ void ConsoleDash::process_rock_or_diamond(int x, int y) {
 
 void ConsoleDash::process_firefly(int x, int y) {
     for (int d = 0; d < 4; ++d) {
-        int dx = dx_for(static_cast<Direction>(d));
+        const int dx = dx_for(static_cast<Direction>(d));
         int dy = dy_for(static_cast<Direction>(d));
         if (in_bounds(x + dx, y + dy) && grid_[x + dx][y + dy].tile == Tile::ROCKFORD) { explode_firefly(x, y); game_over_ = true; return; }
     }
@@ -89,12 +89,12 @@ void ConsoleDash::process_butterfly(int x, int y) {
         int dy = dy_for(static_cast<Direction>(d));
         if (in_bounds(x + dx, y + dy) && grid_[x + dx][y + dy].tile == Tile::AMOEBA) { explode_butterfly(x, y); return; }
     }
-    Direction facing = static_cast<Direction>(grid_[x][y].facing);
+    auto facing = static_cast<Direction>(grid_[x][y].facing);
     Direction rightOf = turn_right_cw(facing);
-    int rx = x + dx_for(rightOf);
-    int ry = y + dy_for(rightOf);
-    int fx = x + dx_for(facing);
-    int fy = y + dy_for(facing);
+    const int rx = x + dx_for(rightOf);
+    const int ry = y + dy_for(rightOf);
+    const int fx = x + dx_for(facing);
+    const int fy = y + dy_for(facing);
     if (in_bounds(rx, ry) && is_space(rx, ry)) { set_cell_internal(rx, ry, Tile::BUTTERFLY, static_cast<uint8_t>(rightOf), false, 0); clear_cell(x, y); mark_moved(x, y); mark_moved(rx, ry); return; }
     if (in_bounds(fx, fy) && is_space(fx, fy)) { set_cell_internal(fx, fy, Tile::BUTTERFLY, grid_[x][y].facing, false, 0); clear_cell(x, y); mark_moved(x, y); mark_moved(fx, fy); return; }
     grid_[x][y].facing = static_cast<uint8_t>(turn_left_cw(facing));
@@ -108,12 +108,12 @@ void ConsoleDash::process_amoeba(int x, int y) {
     int order[4] = {0, 1, 2, 3};
     static std::mt19937 rng(std::random_device{}());
     std::shuffle(order, order + 4, rng);
-    for (int i = 0; i < 4; ++i) {
+    for (const int i : order) {
         int dx = 0, dy = 0;
-        if (order[i] == 0) dx = -1, dy = 0;
-        if (order[i] == 1) dx = 1, dy = 0;
-        if (order[i] == 2) dx = 0, dy = -1;
-        if (order[i] == 3) dx = 0, dy = 1;
+        if (i == 0) dx = -1, dy = 0;
+        if (i == 1) dx = 1, dy = 0;
+        if (i == 2) dx = 0, dy = -1;
+        if (i == 3) dx = 0, dy = 1;
         int nx = x + dx, ny = y + dy;
         if (in_bounds(nx, ny) && (grid_[nx][ny].tile == Tile::SPACE || grid_[nx][ny].tile == Tile::DIRT)) { set_cell_internal(nx, ny, Tile::AMOEBA, 0, false, 0); mark_moved(nx, ny); return; }
     }
