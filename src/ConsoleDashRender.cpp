@@ -17,7 +17,7 @@ void ConsoleDash::render() const {
     std::lock_guard<std::mutex> lock(state_mutex_);
     std::string frame;
     const bool anim_even = (animation_counter_.load(std::memory_order_relaxed) % 2) == 0;
-    const int anim_frame_per_three = animation_counter_.load(std::memory_order_relaxed) % 3;
+    const int anim_frame_per_three = static_cast<int>(animation_counter_.load(std::memory_order_relaxed) % 3);
     using C = ColorHelper;
 
     auto add_colored = [&](const char* color, const std::string& glyph) { frame += color; frame += glyph; frame += C::RESET; };

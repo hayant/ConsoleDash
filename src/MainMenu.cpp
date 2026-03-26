@@ -146,10 +146,14 @@ void MainMenu::render_help_screen(int anim_counter) {
         << border                                                                   << "\n";
 }
 
-void MainMenu::render_level_select(const std::vector<LevelEntry>& levels, int selected_index, const std::string& levels_path, int scroll_offset) {
+void MainMenu::render_level_select(
+    const std::vector<LevelEntry>& levels,
+    const int selected_index,
+    const std::string& levels_path,
+    const int scroll_offset) {
+
     clear_terminal();
     constexpr int inner_width = 38;
-    constexpr int max_visible = 20;
 
     auto make_border = []() { return std::string(inner_width, '#'); };
     auto make_row = [](const std::string& content) {
@@ -172,6 +176,7 @@ void MainMenu::render_level_select(const std::vector<LevelEntry>& levels, int se
     if (levels.empty()) {
         lines.push_back(make_row("  No level files found."));
     } else {
+        constexpr int max_visible = 20;
         const int total = static_cast<int>(levels.size());
         const int visible_count = std::min(max_visible, total - scroll_offset);
         lines.push_back(make_row(scroll_offset > 0 ? "  ^ ..." : ""));
@@ -256,7 +261,7 @@ std::vector<MainMenu::LevelEntry> MainMenu::discover_levels(const std::string& l
 
     for (const auto& entry : std::filesystem::directory_iterator(levels_dir)) {
         if (!entry.is_regular_file()) continue;
-        const std::filesystem::path p = entry.path();
+        const std::filesystem::path& p = entry.path();
         if (p.extension() != ".txt") continue;
         const std::string stem = p.stem().string();
         const std::string name = extract_level_name(p.string());
@@ -370,7 +375,7 @@ bool MainMenu::show_level_select(InputHelper& input_helper, std::string& selecte
     }
 }
 
-MainMenuSelectionResult MainMenu::show(InputHelper& input_helper) const {
+MainMenuSelectionResult MainMenu::show(InputHelper& input_helper) {
     Selection selection = Selection::Play;
     render_main_menu(selection);
     while (true) {

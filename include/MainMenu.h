@@ -16,7 +16,7 @@ struct MainMenuSelectionResult {
 
 class MainMenu {
 public:
-    MainMenuSelectionResult show(InputHelper& input_helper) const;
+    static MainMenuSelectionResult show(InputHelper& input_helper);
 
 private:
     enum class Selection : int { Play = 0, Help = 1, Quit = 2 };
