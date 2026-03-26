@@ -73,7 +73,14 @@ void ConsoleDash::render() const {
     frame += std::to_string(diamonds_required_);
     frame += "  Time: ";
     frame += std::to_string(time_remaining_);
-    frame += "  [WASD] Move  [Q] Quit";
+
+    if (player_wins_) {
+        frame += "\nYOU WIN! Press Q to return";
+    }
+    else if (game_over_)
+        frame += "  GAME OVER - Press Q to return";
+    else
+        frame += "  [WASD] Move  [Q] Quit";
 
     fwrite(frame.data(), 1, frame.size(), stdout);
     fflush(stdout);

@@ -1,4 +1,5 @@
 #include "ConsoleDash.h"
+#include <algorithm>
 
 namespace consoledash {
 
@@ -170,16 +171,23 @@ void ConsoleDash::advance_animation() {
 
 void ConsoleDash::tick() {
     std::lock_guard<std::mutex> lock(state_mutex_);
-    if (!game_over_ && !player_wins_) {
+    if (!player_wins_) {
         const auto now = std::chrono::steady_clock::now();
         const auto elapsed_seconds =
             std::chrono::duration_cast<std::chrono::seconds>(now - last_time_update_).count();
         if (elapsed_seconds > 0) {
-            if (elapsed_seconds >= time_remaining_) {
-                time_remaining_ = 0;
-                game_over_ = true;
+            if (!game_over_) {
+                if (elapsed_seconds >= time_remaining_) {
+                    time_remaining_ = 0;
+                    game_over_ = true;
+                } else {
+                    time_remaining_ -= static_cast<int>(elapsed_seconds);
+                }
             } else {
-                time_remaining_ -= static_cast<int>(elapsed_seconds);
+                // Keep time scrolling after death for display purposes
+                if (time_remaining_ > 0)
+                    time_remaining_ = static_cast<int>(std::max(0LL,
+                        static_cast<long long>(time_remaining_) - elapsed_seconds));
             }
             last_time_update_ += std::chrono::seconds(elapsed_seconds);
         }
@@ -201,7 +209,11 @@ void ConsoleDash::tick() {
         pending_reach_ = false;
     }
 
-    for (int y = 0; y < level_height_ && !game_over_ && !player_wins_; ++y)
+    // If we were already dead when this tick started, keep simulating the world
+    // (creatures, amoeba, rocks keep moving). If we die *during* this tick,
+    // stop processing further cells as usual.
+    const bool was_dead = game_over_;
+    for (int y = 0; y < level_height_ && (was_dead || !game_over_) && !player_wins_; ++y)
         for (int x = 0; x < level_width_; ++x)
             if (!was_moved(x, y))
                 process_cell(x, y);

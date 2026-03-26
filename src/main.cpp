@@ -62,19 +62,35 @@ int main(int argc, char** argv) {
             std::this_thread::sleep_until(next_game_tick);
         }
 
+        // After death: keep the world simulating until the player presses Q.
+        // The animation thread continues rendering; we just drive tick() here.
+        while (game.game_over() && !player_quit) {
+            bool quit = false, reach = false;
+            int dx = 0, dy = 0;
+            input_helper.sample_input(dx, dy, reach, quit);
+            if (quit) {
+                player_quit = true;
+                break;
+            }
+            game.tick();
+            next_game_tick += game_tick_interval;
+            std::this_thread::sleep_until(next_game_tick);
+        }
+
+        // Player wins: keep the animation going on.
+        while (game.player_wins()) {
+            bool quit = false, reach = false;
+            int dx = 0, dy = 0;
+            input_helper.sample_input(dx, dy, reach, quit);
+            if (quit) {
+                player_quit = true;
+                break;
+            }
+        }
+
         animation_running.store(false, std::memory_order_relaxed);
         if (animation_thread.joinable()) {
             animation_thread.join();
-        }
-
-        if (!player_quit) {
-            game.render();
-            if (game.player_wins())
-                std::cout << std::endl << "You win! Diamonds: " << game.diamonds_collected() << std::endl;
-            else if (game.game_over())
-                std::cout << std::endl << "Game Over!" << std::endl;
-            std::cout << "Press any key to return to menu..." << std::endl;
-            input_helper.wait_for_key();
         }
     }
 
