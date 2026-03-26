@@ -226,7 +226,7 @@ void ConsoleDash::try_move_rockford(int dx, int dy) {
     if (target == Tile::ROCK) {
         if (dy == 0) {
             int bx = tx + dx, by = ty + dy;
-            if (in_bounds(bx, by) && can_roll_into(bx, by)) {
+            if (in_bounds(bx, by) && can_roll_into(bx, by) && !grid_[tx][ty].was_falling) {
                 int ox = rockford_x_, oy = rockford_y_;
                 set_cell_internal(bx, by, Tile::ROCK, 0, false, 0);
                 clear_cell(ox, oy);
