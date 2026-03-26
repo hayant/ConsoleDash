@@ -27,7 +27,7 @@ private:
 
     static void clear_terminal();
     static void render_main_menu(Selection selection);
-    static void render_help_screen();
+    static void render_help_screen(int anim_counter);
     static void render_level_select(const std::vector<LevelEntry>& levels, int selected_index, const std::string& levels_path, int scroll_offset);
     static Selection next_selection(Selection selection);
     static Selection previous_selection(Selection selection);

@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <atomic>
 #include <thread>
 
 namespace consoledash {
@@ -67,7 +68,7 @@ void MainMenu::render_main_menu(Selection selection) {
         << "########################################\n";
 }
 
-void MainMenu::render_help_screen() {
+void MainMenu::render_help_screen(int anim_counter) {
     clear_terminal();
 
     constexpr const char* RESET           = "\033[0m";
@@ -110,6 +111,12 @@ void MainMenu::render_help_screen() {
         return row;
     };
 
+    const bool anim_even = (anim_counter % 2) == 0;
+    const int anim_frame = anim_counter % 3;
+    const char firefly_ch  = (anim_frame == 0) ? '|' : (anim_frame == 1) ? '<' : '>';
+    const char butterfly_ch = (anim_frame == 0) ? '|' : (anim_frame == 1) ? '(' : ')';
+    const char amoeba_ch   = anim_even ? '~' : '-';
+
     auto gc = [&](const char* color, char ch) -> std::string {
         return std::string(color) + ch + RESET;
     };
@@ -134,9 +141,9 @@ void MainMenu::render_help_screen() {
         << make_entry(gc(C_BLUE,          '%'), 'W', "Destructible wall")          << "\n"
         << make_entry(gc(C_GRAY,          'O'), 'R', "Rock")                       << "\n"
         << make_entry(gc(C_BRIGHT_CYAN,   '*'), 'D', "Diamond")                    << "\n"
-        << make_entry(gc(C_BRIGHT_YELLOW, '>'), 'F', "Firefly")                    << "\n"
-        << make_entry(gc(C_MAGENTA,       ')'), 'B', "Butterfly")                  << "\n"
-        << make_entry(gc(C_BRIGHT_GREEN,  '~'), 'A', "Amoeba")                     << "\n"
+        << make_entry(gc(C_BRIGHT_YELLOW, firefly_ch),  'F', "Firefly")             << "\n"
+        << make_entry(gc(C_MAGENTA,       butterfly_ch), 'B', "Butterfly")         << "\n"
+        << make_entry(gc(C_BRIGHT_GREEN,  amoeba_ch),   'A', "Amoeba")             << "\n"
         << make_entry(gc(C_BLUE,          '%'), 'M', "Magic wall")                 << "\n"
         << make_entry(gc(C_WHITE,         '#'), 'E', "Exit")                       << "\n"
         << make_entry(gs(C_DIM_YELLOW,    "·"), '.', "Dirt")                       << "\n"
@@ -403,10 +410,22 @@ MainMenuSelectionResult MainMenu::show(InputHelper& input_helper) const {
                 continue;
             }
             if (selection == Selection::Help) {
-                render_help_screen();
+                std::atomic<bool> anim_running{true};
+                int anim_counter = 0;
+                constexpr auto anim_interval = std::chrono::milliseconds(200);
+                std::thread anim_thread([&] {
+                    auto next_tick = std::chrono::steady_clock::now();
+                    while (anim_running.load(std::memory_order_relaxed)) {
+                        render_help_screen(anim_counter++);
+                        next_tick += anim_interval;
+                        std::this_thread::sleep_until(next_tick);
+                    }
+                });
                 while (true) {
                     const int help_key = input_helper.poll_key_nonblock();
                     if (help_key == '\n' || help_key == '\r') {
+                        anim_running.store(false, std::memory_order_relaxed);
+                        anim_thread.join();
                         render_main_menu(selection);
                         break;
                     }
