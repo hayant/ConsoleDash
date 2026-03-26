@@ -210,7 +210,19 @@ void ConsoleDash::try_move_rockford(int dx, int dy) {
         mark_moved(tx, ty);
         return;
     }
-    if (target == Tile::EXIT) { if (diamonds_collected_ >= diamonds_required_) player_wins_ = true; return; }
+    if (target == Tile::EXIT) {
+        if (diamonds_collected_ >= diamonds_required_) {
+            player_wins_ = true;
+            int ox = rockford_x_, oy = rockford_y_;
+            clear_cell(ox, oy);
+            set_cell_internal(tx, ty, Tile::ROCKFORD, 0, false, 0);
+            rockford_x_ = tx;
+            rockford_y_ = ty;
+            mark_moved(ox, oy);
+            mark_moved(tx, ty);
+        }
+        return;
+    }
     if (target == Tile::ROCK) {
         if (dy == 0) {
             int bx = tx + dx, by = ty + dy;
