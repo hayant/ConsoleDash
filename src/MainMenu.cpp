@@ -1,4 +1,5 @@
 #include "MainMenu.h"
+#include "ColorHelper.h"
 
 #include <algorithm>
 #include <cctype>
@@ -71,15 +72,7 @@ void MainMenu::render_main_menu(Selection selection) {
 void MainMenu::render_help_screen(int anim_counter) {
     clear_terminal();
 
-    constexpr const char* RESET           = "\033[0m";
-    constexpr const char* C_BRIGHT_GREEN  = "\033[92m";
-    constexpr const char* C_WHITE         = "\033[37m";
-    constexpr const char* C_BLUE          = "\033[34m";
-    constexpr const char* C_GRAY          = "\033[90m";
-    constexpr const char* C_BRIGHT_CYAN   = "\033[96m";
-    constexpr const char* C_BRIGHT_YELLOW = "\033[93m";
-    constexpr const char* C_MAGENTA       = "\033[35m";
-    constexpr const char* C_DIM_YELLOW    = "\033[2;33m";
+    using C = ColorHelper;
 
     // '#' + content (padded/clipped to 38 visible chars) + '#'
     auto make_row = [](const std::string& content) {
@@ -117,11 +110,11 @@ void MainMenu::render_help_screen(int anim_counter) {
     const char butterfly_ch = (anim_frame == 0) ? '|' : (anim_frame == 1) ? '(' : ')';
     const char amoeba_ch   = anim_even ? '~' : '-';
 
-    auto gc = [&](const char* color, char ch) -> std::string {
-        return std::string(color) + ch + RESET;
+    auto gc = [](const char* color, char ch) -> std::string {
+        return std::string(color) + ch + C::RESET;
     };
-    auto gs = [&](const char* color, const std::string& s) -> std::string {
-        return std::string(color) + s + RESET;
+    auto gs = [](const char* color, const std::string& s) -> std::string {
+        return std::string(color) + s + C::RESET;
     };
 
     const std::string border(40, '#');
@@ -136,17 +129,17 @@ void MainMenu::render_help_screen(int anim_counter) {
         << make_row("")                                                             << "\n"
         << make_row("  LEVEL ELEMENTS")                                             << "\n"
         << make_row("  CHR  EDIT  DESCRIPTION")                                    << "\n"
-        << make_entry(gc(C_BRIGHT_GREEN,  '@'), '@', "Rockford (player)")          << "\n"
-        << make_entry(gc(C_WHITE,         '#'), '#', "Titanium wall")              << "\n"
-        << make_entry(gc(C_BLUE,          '%'), 'W', "Destructible wall")          << "\n"
-        << make_entry(gc(C_GRAY,          'O'), 'R', "Rock")                       << "\n"
-        << make_entry(gc(C_BRIGHT_CYAN,   '*'), 'D', "Diamond")                    << "\n"
-        << make_entry(gc(C_BRIGHT_YELLOW, firefly_ch),  'F', "Firefly")             << "\n"
-        << make_entry(gc(C_MAGENTA,       butterfly_ch), 'B', "Butterfly")         << "\n"
-        << make_entry(gc(C_BRIGHT_GREEN,  amoeba_ch),   'A', "Amoeba")             << "\n"
-        << make_entry(gc(C_BLUE,          '%'), 'M', "Magic wall")                 << "\n"
-        << make_entry(gc(C_WHITE,         '#'), 'E', "Exit")                       << "\n"
-        << make_entry(gs(C_DIM_YELLOW,    "·"), '.', "Dirt")                       << "\n"
+        << make_entry(gc(C::C_BRIGHT_GREEN,  '@'), '@', "Rockford (player)")          << "\n"
+        << make_entry(gc(C::C_WHITE,         '#'), '#', "Titanium wall")              << "\n"
+        << make_entry(gc(C::C_BLUE,          '%'), 'W', "Destructible wall")          << "\n"
+        << make_entry(gc(C::C_GRAY,          'O'), 'R', "Rock")                       << "\n"
+        << make_entry(gc(C::C_BRIGHT_CYAN,   '*'), 'D', "Diamond")                    << "\n"
+        << make_entry(gc(C::C_BRIGHT_YELLOW, firefly_ch),  'F', "Firefly")            << "\n"
+        << make_entry(gc(C::C_MAGENTA,       butterfly_ch), 'B', "Butterfly")         << "\n"
+        << make_entry(gc(C::C_BRIGHT_GREEN,  amoeba_ch),   'A', "Amoeba")             << "\n"
+        << make_entry(gc(C::C_BLUE,          '%'), 'M', "Magic wall")                 << "\n"
+        << make_entry(gc(C::C_WHITE,         '#'), 'E', "Exit")                       << "\n"
+        << make_entry(gs(C::C_DIM_YELLOW,    "·"), '.', "Dirt")                       << "\n"
         << make_entry(std::string(1, ' '),      ' ', "Empty space")                << "\n"
         << make_row("")                                                             << "\n"
         << make_row("      Press [Enter] to return")                               << "\n"
