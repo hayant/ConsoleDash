@@ -10,6 +10,7 @@ constexpr const char* C_GRAY          = "\033[90m";
 constexpr const char* C_BLUE          = "\033[34m";
 constexpr const char* C_MAGENTA       = "\033[35m";
 constexpr const char* C_BRIGHT_GREEN  = "\033[92m";
+constexpr const char* C_CYAN          = "\033[36m";
 constexpr const char* C_BRIGHT_CYAN   = "\033[96m";
 constexpr const char* C_BRIGHT_YELLOW = "\033[93m";
 constexpr const char* C_DIM_YELLOW    = "\033[2;33m";

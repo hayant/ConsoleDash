@@ -51,7 +51,7 @@ void do_render(const ConsoleDash& game) {
                     break;
                 }
                 case Tile::ROCK:      add_colored_char(C_GRAY, 'O'); break;
-                case Tile::DIAMOND:   add_colored_char(C_BRIGHT_CYAN, '*'); break;
+                case Tile::DIAMOND:   add_colored_char(anim_even ? C_BRIGHT_CYAN : C_CYAN, '*'); break;
                 case Tile::FIREFLY:   add_colored_char(C_BRIGHT_YELLOW, firefly_mark(anim_frame)); break;
                 case Tile::BUTTERFLY: add_colored_char(C_MAGENTA, butterfly_mark(anim_frame)); break;
                 case Tile::AMOEBA:    add_colored_char(C_BRIGHT_GREEN, anim_even ? '~' : '-'); break;
