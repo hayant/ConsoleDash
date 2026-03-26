@@ -69,31 +69,81 @@ void MainMenu::render_main_menu(Selection selection) {
 
 void MainMenu::render_help_screen() {
     clear_terminal();
+
+    constexpr const char* RESET           = "\033[0m";
+    constexpr const char* C_BRIGHT_GREEN  = "\033[92m";
+    constexpr const char* C_WHITE         = "\033[37m";
+    constexpr const char* C_BLUE          = "\033[34m";
+    constexpr const char* C_GRAY          = "\033[90m";
+    constexpr const char* C_BRIGHT_CYAN   = "\033[96m";
+    constexpr const char* C_BRIGHT_YELLOW = "\033[93m";
+    constexpr const char* C_MAGENTA       = "\033[35m";
+    constexpr const char* C_DIM_YELLOW    = "\033[2;33m";
+
+    // '#' + content (padded/clipped to 38 visible chars) + '#'
+    auto make_row = [](const std::string& content) {
+        const int len = static_cast<int>(content.size());
+        std::string row = "#";
+        row += content.substr(0, std::min(len, 38));
+        row += std::string(std::max(0, 38 - len), ' ');
+        row += "#";
+        return row;
+    };
+
+    // Three-column entry row. Visible positions within the 38 inner chars:
+    //   1-2:  indent
+    //   3:    colored game char  (aligns with "CHR" header at pos 3)
+    //   4-7:  gap
+    //   8:    level-editor char  (aligns with "EDIT" header at pos 8)
+    //   9-13: gap
+    //   14-38: description + trailing spaces (aligns with "DESCRIPTION" header at pos 14)
+    auto make_entry = [&](const std::string& colored_game, char edit, const std::string& desc) {
+        const int trailing = 25 - static_cast<int>(desc.size());
+        std::string row = "#  ";
+        row += colored_game;   // ANSI + char + RESET (1 visible char)
+        row += "    ";         // pos 4-7
+        row += edit;           // pos 8
+        row += "     ";        // pos 9-13
+        row += desc;
+        if (trailing > 0) row += std::string(trailing, ' ');
+        row += "#";
+        return row;
+    };
+
+    auto gc = [&](const char* color, char ch) -> std::string {
+        return std::string(color) + ch + RESET;
+    };
+    auto gs = [&](const char* color, const std::string& s) -> std::string {
+        return std::string(color) + s + RESET;
+    };
+
+    const std::string border(40, '#');
     std::cout
-        << "########################################\n"
-        << "#                 HELP                 #\n"
-        << "#                                      #\n"
-        << "#  CONTROLS                            #\n"
-        << "#  W/A/S/D         Move Rockford       #\n"
-        << "#  Space+W/A/S/D   Reach in direction  #\n"
-        << "#  Q               Back to menu        #\n"
-        << "#                                      #\n"
-        << "#  LEVEL EDITING                       #\n"
-        << "#  @  Player start                     #\n"
-        << "#  #  Titanium wall (indestructible)   #\n"
-        << "#  W  Destructible wall                #\n"
-        << "#  R  Rock                             #\n"
-        << "#  D  Diamond                          #\n"
-        << "#  F  Firefly                          #\n"
-        << "#  B  Butterfly                        #\n"
-        << "#  A  Amoeba                           #\n"
-        << "#  M  Magic wall                       #\n"
-        << "#  E  Exit                             #\n"
-        << "#  .  Dirt                             #\n"
-        << "#     Empty space                      #\n"
-        << "#                                      #\n"
-        << "#      Press [Enter] to return         #\n"
-        << "########################################\n";
+        << border                                                                   << "\n"
+        << make_row("                 HELP")                                        << "\n"
+        << make_row("")                                                             << "\n"
+        << make_row("  CONTROLS")                                                   << "\n"
+        << make_row("  W/A/S/D        Move Rockford")                              << "\n"
+        << make_row("  Space+W/A/S/D  Reach in direction")                         << "\n"
+        << make_row("  Q              Back to menu")                                << "\n"
+        << make_row("")                                                             << "\n"
+        << make_row("  LEVEL ELEMENTS")                                             << "\n"
+        << make_row("  CHR  EDIT  DESCRIPTION")                                    << "\n"
+        << make_entry(gc(C_BRIGHT_GREEN,  '@'), '@', "Rockford (player)")          << "\n"
+        << make_entry(gc(C_WHITE,         '#'), '#', "Titanium wall")              << "\n"
+        << make_entry(gc(C_BLUE,          '%'), 'W', "Destructible wall")          << "\n"
+        << make_entry(gc(C_GRAY,          'O'), 'R', "Rock")                       << "\n"
+        << make_entry(gc(C_BRIGHT_CYAN,   '*'), 'D', "Diamond")                    << "\n"
+        << make_entry(gc(C_BRIGHT_YELLOW, '>'), 'F', "Firefly")                    << "\n"
+        << make_entry(gc(C_MAGENTA,       ')'), 'B', "Butterfly")                  << "\n"
+        << make_entry(gc(C_BRIGHT_GREEN,  '~'), 'A', "Amoeba")                     << "\n"
+        << make_entry(gc(C_BLUE,          '%'), 'M', "Magic wall")                 << "\n"
+        << make_entry(gc(C_WHITE,         '#'), 'E', "Exit")                       << "\n"
+        << make_entry(gs(C_DIM_YELLOW,    "·"), '.', "Dirt")                       << "\n"
+        << make_entry(std::string(1, ' '),      ' ', "Empty space")                << "\n"
+        << make_row("")                                                             << "\n"
+        << make_row("      Press [Enter] to return")                               << "\n"
+        << border                                                                   << "\n";
 }
 
 void MainMenu::render_level_select(const std::vector<LevelEntry>& levels, int selected_index, const std::string& levels_path, int scroll_offset) {
@@ -124,15 +174,17 @@ void MainMenu::render_level_select(const std::vector<LevelEntry>& levels, int se
     } else {
         const int total = static_cast<int>(levels.size());
         const int visible_count = std::min(max_visible, total - scroll_offset);
-        if (scroll_offset > 0)
-            lines.push_back(make_row("  ^ ..."));
+        lines.push_back(make_row(scroll_offset > 0 ? "  ^ ..." : ""));
+        // if (scroll_offset > 0)
+        //     lines.push_back(make_row("  ^ ..."));
         for (int i = 0; i < visible_count; ++i) {
             const int level_idx = scroll_offset + i;
             const char mark = (level_idx + 1 == selected_index) ? '>' : ' ';
             lines.push_back(make_row("  " + std::string(1, mark) + " " + levels[level_idx].display_label));
         }
-        if (scroll_offset + visible_count < total)
-            lines.push_back(make_row("  v ..."));
+        lines.push_back(make_row(scroll_offset + visible_count < total ? "  v ..." : ""));
+        // if (scroll_offset + visible_count < total)
+        //     lines.push_back(make_row("  v ..."));
     }
 
     lines.push_back(make_row(""));
