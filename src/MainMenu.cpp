@@ -2,7 +2,6 @@
 #include "ColorHelper.h"
 
 #include <algorithm>
-#include <cctype>
 #include <chrono>
 #include <cstdlib>
 #include <filesystem>
@@ -72,7 +71,7 @@ void MainMenu::render_main_menu(Selection selection) {
 void MainMenu::render_help_screen(int anim_counter) {
     clear_terminal();
 
-    using C = ColorHelper;
+    using namespace Colors;
 
     // '#' + content (padded/clipped to 38 visible chars) + '#'
     auto make_row = [](const std::string& content) {
@@ -111,10 +110,10 @@ void MainMenu::render_help_screen(int anim_counter) {
     const char amoeba_ch   = anim_even ? '~' : '-';
 
     auto gc = [](const char* color, char ch) -> std::string {
-        return std::string(color) + ch + C::RESET;
+        return std::string(color) + ch + RESET;
     };
     auto gs = [](const char* color, const std::string& s) -> std::string {
-        return std::string(color) + s + C::RESET;
+        return std::string(color) + s + RESET;
     };
 
     const std::string border(40, '#');
@@ -129,17 +128,17 @@ void MainMenu::render_help_screen(int anim_counter) {
         << make_row("")                                                             << "\n"
         << make_row("  LEVEL ELEMENTS")                                             << "\n"
         << make_row("  CHR  EDIT  DESCRIPTION")                                    << "\n"
-        << make_entry(gc(C::C_BRIGHT_GREEN,  '@'), '@', "Rockford (player)")          << "\n"
-        << make_entry(gc(C::C_WHITE,         '#'), '#', "Titanium wall")              << "\n"
-        << make_entry(gc(C::C_BLUE,          '%'), 'W', "Destructible wall")          << "\n"
-        << make_entry(gc(C::C_GRAY,          'O'), 'R', "Rock")                       << "\n"
-        << make_entry(gc(C::C_BRIGHT_CYAN,   '*'), 'D', "Diamond")                    << "\n"
-        << make_entry(gc(C::C_BRIGHT_YELLOW, firefly_ch),  'F', "Firefly")            << "\n"
-        << make_entry(gc(C::C_MAGENTA,       butterfly_ch), 'B', "Butterfly")         << "\n"
-        << make_entry(gc(C::C_BRIGHT_GREEN,  amoeba_ch),   'A', "Amoeba")             << "\n"
-        << make_entry(gs(C::C_BLUE, anim_even ? "%" : "°"), 'M', "Magic wall")         << "\n"
-        << make_entry(gc(C::C_WHITE,         '#'), 'E', "Exit")                       << "\n"
-        << make_entry(gs(C::C_DIM_YELLOW,    "·"), '.', "Dirt")                       << "\n"
+        << make_entry(gc(C_BRIGHT_GREEN,  '@'), '@', "Rockford (player)")          << "\n"
+        << make_entry(gc(C_WHITE,         '#'), '#', "Titanium wall")              << "\n"
+        << make_entry(gc(C_BLUE,          '%'), 'W', "Destructible wall")          << "\n"
+        << make_entry(gc(C_GRAY,          'O'), 'R', "Rock")                       << "\n"
+        << make_entry(gc(C_BRIGHT_CYAN,   '*'), 'D', "Diamond")                    << "\n"
+        << make_entry(gc(C_BRIGHT_YELLOW, firefly_ch),  'F', "Firefly")            << "\n"
+        << make_entry(gc(C_MAGENTA,       butterfly_ch), 'B', "Butterfly")         << "\n"
+        << make_entry(gc(C_BRIGHT_GREEN,  amoeba_ch),   'A', "Amoeba")             << "\n"
+        << make_entry(gs(C_BLUE, anim_even ? "%" : "°"), 'M', "Magic wall")         << "\n"
+        << make_entry(gc(C_WHITE,         '#'), 'E', "Exit")                       << "\n"
+        << make_entry(gs(C_DIM_YELLOW,    "·"), '.', "Dirt")                       << "\n"
         << make_entry(std::string(1, ' '),      ' ', "Empty space")                << "\n"
         << make_row("")                                                             << "\n"
         << make_row("      Press [Enter] to return")                               << "\n"

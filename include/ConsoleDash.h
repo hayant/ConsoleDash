@@ -54,6 +54,8 @@ public:
     bool set_level_size(int width, int height);
     int level_width() const { return level_width_; }
     int level_height() const { return level_height_; }
+    const Cell& cell_at(int x, int y) const { return grid_[x][y]; }
+    uint64_t animation_counter() const { return animation_counter_.load(std::memory_order_relaxed); }
 
     int rockford_x() const { return rockford_x_; }
     int rockford_y() const { return rockford_y_; }
