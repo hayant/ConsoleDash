@@ -36,6 +36,12 @@ Run tests:
 ctest --test-dir build
 ```
 
+### Windows
+
+The project compiles with G++ (MinGW/MSYS2) or MSVC on Windows without changes.
+
+ANSI color output requires virtual terminal processing, which the game enables automatically at startup via `SetConsoleMode(ENABLE_VIRTUAL_TERMINAL_PROCESSING)`. This works on Windows 10 1511 and later. On older systems colors will not render, but the game remains playable.
+
 ## Run
 
 ### Start with default built-in test level

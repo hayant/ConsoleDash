@@ -1,6 +1,7 @@
 #include "InputHelper.h"
 
 #if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
 #include <conio.h>
 #else
 #include <termios.h>
@@ -20,7 +21,13 @@ bool s_raw = false;
 
 void InputHelper::init_input() {
 #if defined(_WIN32) || defined(_WIN64)
-    // No terminal mode setup required on Windows.
+    // Enable ANSI/VT100 escape code processing so colored output renders correctly.
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut != INVALID_HANDLE_VALUE) {
+        DWORD mode = 0;
+        if (GetConsoleMode(hOut, &mode))
+            SetConsoleMode(hOut, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+    }
 #else
     if (!isatty(STDIN_FILENO)) return;
     tcgetattr(STDIN_FILENO, &s_saved);
