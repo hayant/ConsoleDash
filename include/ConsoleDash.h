@@ -25,6 +25,7 @@ enum class Tile : uint8_t {
     BUTTERFLY,
     AMOEBA,
     MAGIC_WALL,
+    SLIME,
     ROCKFORD,
     EXIT,
     TITANIUM_WALL,
@@ -72,6 +73,7 @@ public:
     void set_amoeba_max_size(int max_size);
     void set_amoeba_growth_factor(int growth_factor);
     void set_magic_wall_duration(int duration_ticks);
+    void set_slime_permeability(int permeability);
     void set_cell(int x, int y, Tile t, uint8_t facing = 0);
     void set_rockford(int x, int y);
     void set_exit(int x, int y);
@@ -102,6 +104,7 @@ private:
     int magic_wall_duration_ = 200;
     int magic_wall_timer_ = 0;
     bool magic_wall_exhausted_ = false;
+    int slime_permeability_ = 0;
 
     bool in_bounds(int x, int y) const;
     bool is_space(int x, int y) const; // moving objects can only enter empty space
@@ -120,10 +123,12 @@ private:
     void process_butterfly(int x, int y);
     void process_amoeba(int x, int y);
     static void process_magic_wall(int x, int y);
+    void process_slime(int x, int y);
     void process_rockford(int x, int y);
 
     void explode_firefly(int x, int y);
     void explode_butterfly(int x, int y);
+    void explode_rockford(int x, int y);
     void explode_at(int cx, int cy, Tile source, Tile fill);
     void advance_explosions();
 

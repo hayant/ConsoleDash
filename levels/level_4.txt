@@ -23,7 +23,7 @@
 #.R.......R.......R.........R..........#
 ########################################
 
-NAME: "None"
+NAME: "Magic wall"
 TIME: 300
 AMOEBA_MAX_SIZE: 10
 MAGIC_WALL_DURATION: 50

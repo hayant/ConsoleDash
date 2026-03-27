@@ -19,7 +19,7 @@ void ConsoleDash::process_rock_or_diamond(int x, int y) {
     int nx = x, ny = y + 1;
     if (!in_bounds(nx, ny)) { grid_[x][y].was_falling = false; return; }
     Cell& below = grid_[nx][ny];
-    if (below.tile == Tile::ROCKFORD) { if (was_falling) game_over_ = true; grid_[x][y].was_falling = false; return; }
+    if (below.tile == Tile::ROCKFORD) { if (was_falling) explode_rockford(nx, ny); else grid_[x][y].was_falling = false; return; }
     if (is_space(nx, ny)) { set_cell_internal(nx, ny, tile, 0, true); clear_cell(x, y); mark_moved(x, y); mark_moved(nx, ny); return; }
     if (below.tile == Tile::FIREFLY) {
         if (was_falling) { explode_firefly(nx, ny); mark_moved(x, y); mark_moved(nx, ny); }
@@ -29,6 +29,24 @@ void ConsoleDash::process_rock_or_diamond(int x, int y) {
     if (below.tile == Tile::BUTTERFLY) {
         if (was_falling) { explode_butterfly(nx, ny); mark_moved(x, y); mark_moved(nx, ny); }
         else grid_[x][y].was_falling = false;
+        return;
+    }
+    if (below.tile == Tile::SLIME) {
+        static std::mt19937 rng(std::random_device{}());
+        const int rand_number = (slime_permeability_ > 0)
+            ? std::uniform_int_distribution<int>(0, slime_permeability_)(rng)
+            : 0;
+        if (rand_number == 0) {
+            const int tx = nx, ty = ny + 1;
+            if (in_bounds(tx, ty) && is_space(tx, ty)) {
+                set_cell_internal(tx, ty, tile, 0, true);
+                mark_moved(tx, ty);
+                clear_cell(x, y);
+                mark_moved(x, y);
+                return;
+            }
+        }
+        grid_[x][y].was_falling = false;
         return;
     }
     if (below.tile == Tile::MAGIC_WALL) {
@@ -123,10 +141,12 @@ void ConsoleDash::process_amoeba(int x, int y) {
 }
 
 void ConsoleDash::process_magic_wall(int x, int y) { (void)x; (void)y; }
+void ConsoleDash::process_slime(int x, int y) { (void)x; (void)y; }
 void ConsoleDash::process_rockford(int x, int y) { (void)x; (void)y; try_move_rockford(pending_dx_, pending_dy_); pending_dx_ = 0; pending_dy_ = 0; }
 
 void ConsoleDash::explode_firefly(int x, int y) { explode_at(x, y, Tile::FIREFLY, Tile::SPACE); }
 void ConsoleDash::explode_butterfly(int x, int y) { explode_at(x, y, Tile::BUTTERFLY, Tile::DIAMOND); }
+void ConsoleDash::explode_rockford(int x, int y) { explode_at(x, y, Tile::FIREFLY, Tile::SPACE); }
 
 void ConsoleDash::explode_at(int cx, int cy, Tile source, Tile fill) {
     for (int dy = -1; dy <= 1; ++dy)
@@ -202,7 +222,7 @@ void ConsoleDash::try_move_rockford(int dx, int dy) {
         return;
     }
     if (target == Tile::DIAMOND) {
-        if (grid_[tx][ty].was_falling) { game_over_ = true; return; }
+        if (grid_[tx][ty].was_falling) { explode_rockford(rockford_x_, rockford_y_); return; }
         diamonds_collected_++;
         int ox = rockford_x_, oy = rockford_y_;
         clear_cell(ox, oy);

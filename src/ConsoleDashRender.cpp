@@ -61,6 +61,7 @@ void do_render(const ConsoleDash& game) {
                     else
                         add_colored_char(C_BLUE, '%');
                     break;
+                case Tile::SLIME:    add_colored_char(C_LIGHT_BLUE, anim_even ? '~' : '-'); break;
                 case Tile::ROCKFORD: add_colored_char(C_BRIGHT_GREEN, '@'); break;
                 case Tile::EXIT: {
                     const bool open = game.diamonds_collected() >= game.diamonds_required();

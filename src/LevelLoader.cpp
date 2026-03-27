@@ -61,6 +61,7 @@ void parse_level_parameters(const std::vector<std::string>& parameter_lines, Lev
         else if (key == "AMOEBA_MAX_SIZE") parameters.AMOEBA_MAX_SIZE = *parsed_value;
         else if (key == "AMOEBA_GROWTH_FACTOR") parameters.AMOEBA_GROWTH_FACTOR = *parsed_value;
         else if (key == "MAGIC_WALL_DURATION") parameters.MAGIC_WALL_DURATION = *parsed_value;
+        else if (key == "SLIME_PERMEABILITY_VALUE") parameters.SLIME_PERMEABILITY_VALUE = *parsed_value;
         else if (key == "GAME_TICK_INTERVAL") parameters.GAME_TICK_INTERVAL = *parsed_value;
         else if (key == "ANIMATION_TICK_INTERVAL") parameters.ANIMATION_TICK_INTERVAL = *parsed_value;
     }
@@ -151,6 +152,9 @@ bool LevelLoader::load_from_file(const std::string& path, ConsoleDash& game, Lev
                 case 'M':
                     game.set_cell(x, y, Tile::MAGIC_WALL);
                     break;
+                case 'S':
+                    game.set_cell(x, y, Tile::SLIME);
+                    break;
                 case 'E':
                     game.set_cell(x, y, Tile::EXIT);
                     break;
@@ -178,6 +182,7 @@ bool LevelLoader::load_from_file(const std::string& path, ConsoleDash& game, Lev
     if (parameters.AMOEBA_MAX_SIZE.has_value()) game.set_amoeba_max_size(*parameters.AMOEBA_MAX_SIZE);
     if (parameters.AMOEBA_GROWTH_FACTOR.has_value()) game.set_amoeba_growth_factor(*parameters.AMOEBA_GROWTH_FACTOR);
     if (parameters.MAGIC_WALL_DURATION.has_value()) game.set_magic_wall_duration(*parameters.MAGIC_WALL_DURATION);
+    if (parameters.SLIME_PERMEABILITY_VALUE.has_value()) game.set_slime_permeability(*parameters.SLIME_PERMEABILITY_VALUE);
     return true;
 }
 

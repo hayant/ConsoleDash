@@ -44,6 +44,7 @@ bool ConsoleDash::set_level_size(int width, int height) {
     amoeba_current_size_ = 0;
     magic_wall_timer_ = 0;
     magic_wall_exhausted_ = false;
+    slime_permeability_ = 0;
     animation_counter_.store(0, std::memory_order_relaxed);
     return true;
 }
@@ -76,6 +77,11 @@ void ConsoleDash::set_magic_wall_duration(int duration_ticks) {
     magic_wall_duration_ = duration_ticks;
 }
 
+void ConsoleDash::set_slime_permeability(int permeability) {
+    if (permeability < 0) return;
+    slime_permeability_ = permeability;
+}
+
 bool ConsoleDash::is_space(int x, int y) const {
     if (!in_bounds(x, y)) return false;
     return grid_[x][y].tile == Tile::SPACE;
@@ -91,7 +97,7 @@ bool ConsoleDash::is_blocking(int x, int y) const {
     if (!in_bounds(x, y)) return true;
     Tile t = grid_[x][y].tile;
     return t == Tile::TITANIUM_WALL || t == Tile::WALL || t == Tile::ROCK || t == Tile::DIAMOND ||
-           t == Tile::MAGIC_WALL || t == Tile::EXIT || t == Tile::EXPLOSION ||
+           t == Tile::MAGIC_WALL || t == Tile::SLIME || t == Tile::EXIT || t == Tile::EXPLOSION ||
            t == Tile::DIRT || t == Tile::ROCKFORD || t == Tile::AMOEBA;
 }
 
@@ -243,6 +249,9 @@ void ConsoleDash::process_cell(int x, int y) {
             break;
         case Tile::MAGIC_WALL:
             process_magic_wall(x, y);
+            break;
+        case Tile::SLIME:
+            process_slime(x, y);
             break;
         case Tile::ROCKFORD:
             process_rockford(x, y);
