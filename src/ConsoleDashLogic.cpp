@@ -33,14 +33,16 @@ void ConsoleDash::process_rock_or_diamond(int x, int y) {
     }
     if (below.tile == Tile::MAGIC_WALL) {
         if (was_falling) {
-            magic_wall_timer_ = magic_wall_duration_;
-            Tile converted = (tile == Tile::ROCK) ? Tile::DIAMOND : Tile::ROCK;
-            int tx = nx, ty = ny + 1;
-            if (in_bounds(tx, ty) && is_space(tx, ty)) {
-                set_cell_internal(tx, ty, converted, 0, true);
-                mark_moved(tx, ty);
+            if (!magic_wall_exhausted_) {
+                magic_wall_timer_ = magic_wall_duration_;
+                Tile converted = (tile == Tile::ROCK) ? Tile::DIAMOND : Tile::ROCK;
+                int tx = nx, ty = ny + 1;
+                if (in_bounds(tx, ty) && is_space(tx, ty)) {
+                    set_cell_internal(tx, ty, converted, 0, true);
+                    mark_moved(tx, ty);
+                }
             }
-            // Object is always consumed by the wall, whether or not there is room below.
+            // Object is always consumed by the wall (active or exhausted).
             clear_cell(x, y);
             mark_moved(x, y);
         } else {

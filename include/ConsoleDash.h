@@ -101,6 +101,7 @@ private:
     int amoeba_growth_factor_ = 75;
     int magic_wall_duration_ = 200;
     int magic_wall_timer_ = 0;
+    bool magic_wall_exhausted_ = false;
 
     bool in_bounds(int x, int y) const;
     bool is_space(int x, int y) const; // moving objects can only enter empty space

@@ -43,6 +43,7 @@ bool ConsoleDash::set_level_size(int width, int height) {
     player_wins_ = false;
     amoeba_current_size_ = 0;
     magic_wall_timer_ = 0;
+    magic_wall_exhausted_ = false;
     animation_counter_.store(0, std::memory_order_relaxed);
     return true;
 }
@@ -211,8 +212,10 @@ void ConsoleDash::tick() {
 
     post_tick_amoeba();
 
-    if (magic_wall_timer_ > 0)
-        magic_wall_timer_--;
+    if (magic_wall_timer_ > 0) {
+        if (--magic_wall_timer_ == 0)
+            magic_wall_exhausted_ = true;
+    }
 }
 
 void ConsoleDash::process_cell(int x, int y) {
