@@ -13,6 +13,8 @@ The project is intentionally focused on engine rules and game-loop behavior rath
 - Animated enemies and explosion stages
 - Reach mechanic (`Space` + movement key)
 - Colored ANSI terminal rendering
+- Animated in-game help screen
+- World keeps simulating after Rockford dies until the player quits
 
 ## Project Layout
 
@@ -78,12 +80,28 @@ Levels are plain text grids.
 - `B` = Butterfly
 - `A` = Amoeba
 - `M` = Magic wall
+- `S` = Slime
+- `D` = Diamond
 - `E` = Exit
 - ` ` (space) = Empty space
 - `.` = Dirt
 - Unknown characters = Dirt
 
-`D` is also accepted as a diamond in current implementation for compatibility with existing level examples.
+### Level parameters
+
+After the map grid, a blank line followed by `key: value` pairs configures level behaviour:
+
+| Parameter                | Type    | Description                                              |
+|--------------------------|---------|----------------------------------------------------------|
+| `NAME`                   | string  | Display name shown in the level selector                 |
+| `TIME`                   | integer | Time limit in seconds                                    |
+| `DIAMONDS_REQUIRED`      | integer | Diamonds needed to open the exit (default: 3)            |
+| `AMOEBA_MAX_SIZE`        | integer | Maximum number of amoeba cells before it turns to rock   |
+| `AMOEBA_GROWTH_FACTOR`   | integer | Growth probability denominator (higher = slower growth)  |
+| `MAGIC_WALL_DURATION`    | integer | How long a magic wall stays active after first contact   |
+| `SLIME_PERMEABILITY_VALUE` | integer | Permeability denominator — 0 = always passes, higher = more solid |
+| `GAME_TICK_INTERVAL`     | integer | Game logic tick interval in milliseconds                 |
+| `ANIMATION_TICK_INTERVAL`| integer | Animation tick interval in milliseconds                  |
 
 ### Dynamic size and limits
 
@@ -98,8 +116,11 @@ Levels are plain text grids.
 ## Gameplay Notes
 
 - Rocks and diamonds use falling/rolling rules and can crush/trigger explosions based on falling state.
+- Rockford explodes like a firefly when crushed by a falling rock or diamond.
 - Fireflies and butterflies follow directional movement logic and explode under specific conditions.
-- Explosions have staged states (`a`, `b`, `c`) before resolving to final tiles.
+- Explosions have staged states before resolving to final tiles: firefly explosions leave empty space, butterfly explosions leave diamonds.
+- Magic wall converts falling rocks to diamonds and vice versa. It activates on first contact and stays active for a configurable duration. Once exhausted it cannot be reactivated, but still consumes falling objects.
+- Slime is a permeable barrier. Rocks and diamonds can pass through it with a probability controlled by `SLIME_PERMEABILITY_VALUE`. Unlike magic wall it does not convert objects and is never exhausted.
 - Exit display changes depending on whether required diamonds have been collected.
 
 ## Status

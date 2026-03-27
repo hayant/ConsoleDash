@@ -137,7 +137,7 @@ void MainMenu::render_help_screen(int anim_counter) {
         << make_entry(gc(C_MAGENTA,       butterfly_ch), 'B', "Butterfly")         << "\n"
         << make_entry(gc(C_BRIGHT_GREEN,  amoeba_ch),   'A', "Amoeba")             << "\n"
         << make_entry(gs(C_BLUE, anim_even ? "%" : "°"), 'M', "Magic wall")         << "\n"
-        << make_entry(gc(C_CYAN,          '+'), 'S', "Slime")                      << "\n"
+        << make_entry(gc(C_LIGHT_BLUE, anim_even ? '~' : '-'), 'S', "Slime")           << "\n"
         << make_entry(gc(C_WHITE, anim_even ? '#' : ' '), 'E', "Exit")             << "\n"
         << make_entry(gs(C_DIM_YELLOW,    "·"), '.', "Dirt")                       << "\n"
         << make_entry(std::string(1, ' '),      ' ', "Empty space")                << "\n"

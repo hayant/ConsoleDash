@@ -12,7 +12,7 @@ constexpr const char* C_MAGENTA       = "\033[35m";
 constexpr const char* C_BRIGHT_GREEN  = "\033[92m";
 constexpr const char* C_CYAN          = "\033[36m";
 constexpr const char* C_BRIGHT_CYAN   = "\033[96m";
-constexpr const char* C_LIGHT_BLUE    = "\033[94m";
+constexpr const char* C_LIGHT_BLUE    = "\033[38;2;173;216;230m";
 constexpr const char* C_BRIGHT_YELLOW = "\033[93m";
 constexpr const char* C_DIM_YELLOW    = "\033[2;33m";
 
