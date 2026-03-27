@@ -56,7 +56,7 @@ void do_render(const ConsoleDash& game) {
                 case Tile::BUTTERFLY: add_colored_char(C_MAGENTA, butterfly_mark(anim_frame)); break;
                 case Tile::AMOEBA:    add_colored_char(C_BRIGHT_GREEN, anim_even ? '~' : '-'); break;
                 case Tile::MAGIC_WALL:
-                    if (cell.magic_timer > 0)
+                    if (game.magic_wall_active())
                         add_colored(C_BLUE, anim_even ? "%" : "°");
                     else
                         add_colored_char(C_BLUE, '%');

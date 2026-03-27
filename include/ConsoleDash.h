@@ -37,7 +37,6 @@ struct Cell {
     Tile tile = Tile::SPACE;
     uint8_t facing = 0;
     bool was_falling = false;
-    int magic_timer = 0;
     uint8_t explosion_stage = 0; // 0..2 while in explosion state
     Tile explosion_source = Tile::SPACE; // source creature for explosion styling
     Tile explosion_result = Tile::SPACE; // final tile when explosion ends
@@ -66,6 +65,7 @@ public:
     bool game_over() const { return game_over_; }
     bool player_wins() const { return player_wins_; }
     bool is_alive() const { return !game_over_ && !player_wins_; }
+    bool magic_wall_active() const { return magic_wall_timer_ > 0; }
 
     void set_diamonds_required(int n) { diamonds_required_ = n; }
     void set_time_limit(int seconds);
@@ -100,6 +100,7 @@ private:
     int amoeba_max_size_ = 150;
     int amoeba_growth_factor_ = 75;
     int magic_wall_duration_ = 200;
+    int magic_wall_timer_ = 0;
 
     bool in_bounds(int x, int y) const;
     bool is_space(int x, int y) const; // moving objects can only enter empty space
@@ -109,7 +110,7 @@ private:
     bool can_roll_into(int x, int y) const;
     void mark_moved(int x, int y);
     bool was_moved(int x, int y) const;
-    void set_cell_internal(int x, int y, Tile t, uint8_t facing = 0, bool falling = false, int magic_timer = 0);
+    void set_cell_internal(int x, int y, Tile t, uint8_t facing = 0, bool falling = false);
     void clear_cell(int x, int y);
 
     void process_cell(int x, int y);

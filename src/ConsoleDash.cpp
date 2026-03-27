@@ -42,6 +42,7 @@ bool ConsoleDash::set_level_size(int width, int height) {
     game_over_ = false;
     player_wins_ = false;
     amoeba_current_size_ = 0;
+    magic_wall_timer_ = 0;
     animation_counter_.store(0, std::memory_order_relaxed);
     return true;
 }
@@ -111,12 +112,11 @@ bool ConsoleDash::was_moved(int x, int y) const {
     return in_bounds(x, y) && moved_[x][y];
 }
 
-void ConsoleDash::set_cell_internal(int x, int y, Tile t, uint8_t facing, bool falling, int magic_timer) {
+void ConsoleDash::set_cell_internal(int x, int y, Tile t, uint8_t facing, bool falling) {
     if (!in_bounds(x, y)) return;
     grid_[x][y].tile = t;
     grid_[x][y].facing = facing;
     grid_[x][y].was_falling = falling;
-    grid_[x][y].magic_timer = magic_timer;
     if (t != Tile::EXPLOSION) {
         grid_[x][y].explosion_stage = 0;
         grid_[x][y].explosion_source = Tile::SPACE;
@@ -126,17 +126,11 @@ void ConsoleDash::set_cell_internal(int x, int y, Tile t, uint8_t facing, bool f
 
 void ConsoleDash::clear_cell(int x, int y) {
     if (!in_bounds(x, y)) return;
-    grid_[x][y].tile = Tile::SPACE;
-    grid_[x][y].facing = 0;
-    grid_[x][y].was_falling = false;
-    grid_[x][y].magic_timer = 0;
-    grid_[x][y].explosion_stage = 0;
-    grid_[x][y].explosion_source = Tile::SPACE;
-    grid_[x][y].explosion_result = Tile::SPACE;
+    grid_[x][y] = Cell{};
 }
 
 void ConsoleDash::set_cell(int x, int y, Tile t, uint8_t facing) {
-    set_cell_internal(x, y, t, facing, false, 0);
+    set_cell_internal(x, y, t, facing, false);
 }
 
 void ConsoleDash::set_rockford(int x, int y) {
@@ -144,15 +138,12 @@ void ConsoleDash::set_rockford(int x, int y) {
     for (int ix = 0; ix < level_width_; ++ix)
         for (int iy = 0; iy < level_height_; ++iy)
             if (grid_[ix][iy].tile == Tile::ROCKFORD) {
-                grid_[ix][iy].tile = Tile::SPACE;
-                grid_[ix][iy].facing = 0;
-                grid_[ix][iy].was_falling = false;
-                grid_[ix][iy].magic_timer = 0;
+                grid_[ix][iy] = Cell{};
                 break;
             }
     rockford_x_ = x;
     rockford_y_ = y;
-    set_cell_internal(x, y, Tile::ROCKFORD, 0, false, 0);
+    set_cell_internal(x, y, Tile::ROCKFORD);
 }
 
 void ConsoleDash::set_exit(int x, int y) {
@@ -220,10 +211,8 @@ void ConsoleDash::tick() {
 
     post_tick_amoeba();
 
-    for (int x = 0; x < level_width_; ++x)
-        for (int y = 0; y < level_height_; ++y)
-            if (grid_[x][y].tile == Tile::MAGIC_WALL && grid_[x][y].magic_timer > 0)
-                grid_[x][y].magic_timer--;
+    if (magic_wall_timer_ > 0)
+        magic_wall_timer_--;
 }
 
 void ConsoleDash::process_cell(int x, int y) {
